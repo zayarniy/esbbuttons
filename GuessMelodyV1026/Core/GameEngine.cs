@@ -245,7 +245,7 @@ namespace GuessMelody.Core
                 // возвращаемся в игру и разблокируем команду, чтобы она могла нажать снова.
                 if (State == RoundState.Wrong)
                 {
-                    _blockedThisRound.Clear();   // снимаем блокировку — «Нет» можно отменить
+                    //_blockedThisRound.Clear();   // снимаем блокировку — «Нет» можно отменить
                     State = RoundState.Playing;
                     RaiseState();
                 }
@@ -268,6 +268,8 @@ namespace GuessMelody.Core
         // -------------------------------------------------------------
         public void OnPlayerPress(string mac, DateTime receivedUtc, string seq, long uptimeMs)
         {
+            if (string.IsNullOrEmpty(mac)) return;
+
             if (Settings?.Rules?.IsSetupMode == true)
             {
                 _log.Add(LogKind.Press, $"[SETUP] {GetTeamName(mac)} нажал (без учёта)");
@@ -280,48 +282,72 @@ namespace GuessMelody.Core
                 return;
             }
 
+            // 1) Заблокирован — уже отвечал неверно в этом раунде
             if (_blockedThisRound.Contains(mac))
             {
-                _log.Add(LogKind.Press, $"{GetTeamName(mac)} заблокирован в этом раунде.");
+                _log.Add(LogKind.Press, $"⛔ {GetTeamName(mac)} заблокирован — уже отвечал неверно.");
                 return;
             }
 
+            // 2) Уже нажимал этот MAC в этом раунде?
             var existing = _pressQueue.FirstOrDefault(p =>
                 string.Equals(p.Mac, mac, StringComparison.OrdinalIgnoreCase));
-            if (existing != null && State == RoundState.WaitingForAnswer)
+
+            if (existing != null)
             {
-                _log.Add(LogKind.Press, $"{GetTeamName(mac)} уже нажал в этом раунде.");
-                return;
+                // Перенажатие разрешено только если:
+                //  - включена настройка AllowRePressAfterWrong
+                //  - И мы всё ещё в Playing (никто не ждёт решения ведущего)
+                bool allowRePress = Settings?.Rules?.AllowRePressAfterWrong == true
+                                    && State == RoundState.Playing;
+
+                if (!allowRePress)
+                {
+                    _log.Add(LogKind.Press, $"⛔ {GetTeamName(mac)} уже нажимал в этом раунде.");
+                    return;
+                }
             }
 
             var team = Teams.FirstOrDefault(t =>
                 string.Equals(t.Mac, mac, StringComparison.OrdinalIgnoreCase));
 
-            var evt = new PressEvent
+            // 3) Первое нажатие в раунде — фиксируем
+            bool isFirst = FirstPressedTeam == null && State == RoundState.Playing;
+
+            if (isFirst)
+            {
+                var evt = new PressEvent
+                {
+                    Mac = mac,
+                    TeamName = team?.Name ?? mac,
+                    Seq = seq,
+                    UptimeMs = uptimeMs,
+                    ReceivedUtc = receivedUtc
+                };
+                _pressQueue.Add(evt);
+
+                FirstPressedTeam = team;
+                _log.Add(LogKind.Press, $"🎯 Первый: {evt.TeamName}");
+                FirstPressed?.Invoke(this, team);
+
+                RequestPauseTrack?.Invoke(this, EventArgs.Empty);
+                State = RoundState.WaitingForAnswer;
+                StartAnswerTimer();
+                RaiseState();
+                return;
+            }
+
+            // 4) Нажатие в состоянии WaitingForAnswer (пока ведущий решает) —
+            //    просто добавляем в очередь для протокола, ничего не меняем.
+            _pressQueue.Add(new PressEvent
             {
                 Mac = mac,
                 TeamName = team?.Name ?? mac,
                 Seq = seq,
                 UptimeMs = uptimeMs,
                 ReceivedUtc = receivedUtc
-            };
-            _pressQueue.Add(evt);
-
-            if (FirstPressedTeam == null && State == RoundState.Playing)
-            {
-                FirstPressedTeam = team;
-                _log.Add(LogKind.Press, $"🎯 Первый: {evt.TeamName}");
-                FirstPressed?.Invoke(this, team);
-            }
-
-            if(State == RoundState.Playing)
-{
-                // Ставим на паузу, а не стоп — при «Нет» можно будет возобновить
-                RequestPauseTrack?.Invoke(this, EventArgs.Empty);
-                State = RoundState.WaitingForAnswer;
-                StartAnswerTimer();
-                RaiseState();
-            }
+            });
+            _log.Add(LogKind.Press, $"📝 {GetTeamName(mac)} нажал (ожидание решения ведущего)");
         }
 
         private void StartAnswerTimer()
