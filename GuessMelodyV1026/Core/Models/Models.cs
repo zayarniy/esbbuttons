@@ -115,6 +115,14 @@ namespace GuessMelody.Core.Models
         public bool AutoNextRound { get; set; } = false;
 
         public int HeartbeatTimeoutSec { get; set; } = 11;
+        
+
+        private int _wrongPause = 3;
+        public int WrongFeedbackPauseSec
+        {
+            get => _wrongPause;
+            set => _wrongPause = value;
+        }
     }
 
     public class AudioSettings

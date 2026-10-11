@@ -20,9 +20,16 @@ namespace GuessMelody.Views
     /// </summary>
     public partial class PlayerWindow : Window
     {
+        public static PlayerWindow Current { get; private set; }
+
         public PlayerWindow()
         {
             InitializeComponent();
+
+            Current = this;
+            Closed += (s, e) => { if (Current == this) Current = null; };
+
+
             DataContextChanged += (s, e) =>
             {
                 if (DataContext is PlayerWindowViewModel vm)

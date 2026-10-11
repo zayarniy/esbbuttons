@@ -43,7 +43,16 @@ namespace GuessMelody
             services.AddSingleton<SettingsPresetService>();
             services.AddSingleton<HeartbeatBridge>();
             services.AddSingleton<PressBridge>();
-
+            services.AddSingleton<FeedbackService>();
+//            services.AddSingleton<AnswerWindowService>();
+            services.AddSingleton<AnswerWindowService>(sp =>
+            {
+                var wnd = new AnswerWindowService();
+                var feedback = sp.GetRequiredService<FeedbackService>();
+                feedback.ShowCorrectAnswer += (s, answer) => wnd.ShowCorrect(answer, 10);
+                feedback.ShowWrongAnswer += (s, msg) => wnd.ShowWrong(msg, 3);
+                return wnd;
+            });
             return services.BuildServiceProvider();
         }
     }

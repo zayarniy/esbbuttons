@@ -1,8 +1,9 @@
-﻿using System;
+﻿using GuessMelody.Core.Enums;
+using GuessMelody.Core.Models;
+using GuessMelody.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using GuessMelody.Core.Enums;
-using GuessMelody.Core.Models;
 
 namespace GuessMelody.Core
 {
@@ -32,7 +33,15 @@ namespace GuessMelody.Core
         private readonly Dictionary<string, HashSet<string>> _playedByCategory =
             new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
 
+        private FeedbackService _feedback;
+        public void AttachFeedback(FeedbackService feedback) => _feedback = feedback;
+
         public event EventHandler SettingsChanged;
+
+        public event EventHandler<string> CorrectAnswerRequested;    // передаём Track.RelativePath
+        public event EventHandler<string> WrongAnswerRequested;      // передаём Team.Name
+
+
         public GameSettings Settings { get; private set; } = new GameSettings();
         public RoundState State { get; private set; } = RoundState.Idle;
         public int CurrentRound { get; private set; }
@@ -386,33 +395,36 @@ namespace GuessMelody.Core
                 _log.Add(LogKind.Score,
                     $"✅ {FirstPressedTeam.Name} +{add} → {FirstPressedTeam.Score}");
 
-                // Останавливаем музыку полностью — раунд окончен
                 RequestStopTrack?.Invoke(this, EventArgs.Empty);
                 _answerTimer.Stop();
                 State = RoundState.Scored;
                 RaiseState();
                 ScoreChanged?.Invoke(this, EventArgs.Empty);
+
+                // Событие для показа правильного ответа
+                CorrectAnswerRequested?.Invoke(this, CurrentTrack?.RelativePath ?? "");
                 return;
             }
 
             // ---- «Нет» ----
             _log.Add(LogKind.Score, $"❌ {FirstPressedTeam.Name} — ответ неверный.");
             _blockedThisRound.Add(FirstPressedTeam.Mac);
+            var wrongTeamName = FirstPressedTeam.Name;
             FirstPressedTeam = null;
             _answerTimer.Stop();
 
+            // Событие для показа «Неверный ответ» + паузы
+            WrongAnswerRequested?.Invoke(this, wrongTeamName);
+
             if (Settings?.Rules?.AllowRePressAfterWrong == true)
             {
-                // Разрешаем другим (и этому же) нажимать снова — сразу продолжаем музыку
-                State = RoundState.Playing;
-                RequestResumeTrack?.Invoke(this, EventArgs.Empty);
+                // Пауза сделана сервисом; музыка будет возобновлена по его сигналу
+                // (см. FeedbackService.WrongPauseFinished → ResumeMusic)
+                State = RoundState.Wrong;
                 RaiseState();
             }
             else
             {
-                // Ждём решения ведущего. Музыка на паузе.
-                // Если она ещё не была на паузе (например, игрок нажал при повторном запуске) —
-                // ставим на паузу принудительно.
                 RequestPauseTrack?.Invoke(this, EventArgs.Empty);
                 State = RoundState.Wrong;
                 RaiseState();

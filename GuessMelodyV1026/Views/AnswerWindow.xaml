@@ -1,0 +1,35 @@
+﻿<Window x:Class="GuessMelody.Views.AnswerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ответ"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        Topmost="True"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        SizeToContent="WidthAndHeight"
+        MinWidth="480" MinHeight="200">
+
+    <Border CornerRadius="20" Padding="40,24"
+            Background="#CC000000"
+            BorderBrush="#FFD166" BorderThickness="4">
+        <StackPanel>
+            <TextBlock x:Name="TitleText"
+                       Text="Правильный ответ"
+                       FontSize="28" FontWeight="Bold"
+                       Foreground="#FFD166"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,12"/>
+
+            <TextBlock x:Name="AnswerText"
+                       Text=""
+                       FontSize="64" FontWeight="Bold"
+                       Foreground="#FFFFFF"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Border>
+</Window>

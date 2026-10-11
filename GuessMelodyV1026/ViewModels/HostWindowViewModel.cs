@@ -12,14 +12,15 @@ namespace GuessMelody.ViewModels
     {
         private readonly GameEngine _engine;
         private readonly AudioCoordinator _audio;
-
+        private readonly FeedbackService _feedback;
         public ObservableCollection<TeamTile> Teams { get; } = new ObservableCollection<TeamTile>();
         public ObservableCollection<CategoryTile> Categories { get; } = new ObservableCollection<CategoryTile>();
 
-        public HostWindowViewModel(GameEngine engine, AudioCoordinator audio)
+        public HostWindowViewModel(GameEngine engine, AudioCoordinator audio, FeedbackService feedback)
         {
             _engine = engine;
             _audio = audio;
+            _feedback = feedback;
 
             _engine.StateChanged += (s, e) => RefreshAll();
             _engine.ScoreChanged += (s, e) => RefreshTeams();
@@ -32,26 +33,44 @@ namespace GuessMelody.ViewModels
             EndRoundCommand = new RelayCommand(_ => _engine.EndRound());
             PauseCommand = new RelayCommand(_ => _engine.PauseMusic());
             ResumeCommand = new RelayCommand(_ => _engine.ResumeMusic());
-            YesCommand = new RelayCommand(_ => { _engine.SubmitScore(true); _audio?.PlayCorrect(); });
-            NoCommand = new RelayCommand(_ => { _engine.SubmitScore(false); _audio?.PlayWrong(); });
+
+            // Звуки «Правильный»/«Неправильный» теперь играет FeedbackService —
+            // в командах их НЕ дублируем.
+            YesCommand = new RelayCommand(_ => _engine.SubmitScore(true));
+            NoCommand = new RelayCommand(_ => _engine.SubmitScore(false));
+
             PanicCommand = new RelayCommand(_ => _engine.Panic());
+
+            // Heartbeat-индикатор
             _engine.Heartbeat += (s, team) =>
             {
                 if (team == null) return;
                 var tile = Teams.FirstOrDefault(x =>
                     string.Equals(x.Team.Mac, team.Mac, StringComparison.OrdinalIgnoreCase));
 
-                if (tile == null)
-                {
-                    RefreshTeams();
-                    return;
-                }
+                if (tile == null) { RefreshTeams(); return; }
                 tile.PulseHeartbeat();
             };
             _engine.HeartbeatChanged += (s, e) =>
             {
                 foreach (var t in Teams) t.Refresh();
             };
+
+            // Движок просит — сервис показывает окно и играет звук
+            _engine.CorrectAnswerRequested += (s, path) => _feedback.ShowCorrect(path);
+            _engine.WrongAnswerRequested += (s, name) =>
+                _feedback.ShowWrong(_engine.Settings?.Timings?.WrongFeedbackPauseSec ?? 3);
+
+            // Пауза после «Нет» закончилась → при разрешённом переповторе продолжаем музыку
+            _feedback.WrongPauseFinished += (s, e) =>
+            {
+                if (_engine.State == RoundState.Wrong &&
+                    _engine.Settings?.Rules?.AllowRePressAfterWrong == true)
+                {
+                    _engine.ResumeMusic();
+                }
+            };
+
             RebuildCategories();
             RefreshAll();
         }

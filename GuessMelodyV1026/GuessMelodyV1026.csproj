@@ -109,8 +109,10 @@
     <Compile Include="AnswerServer\GameStateSnapshot.cs" />
     <Compile Include="Converters\Converters.cs" />
     <Compile Include="Core\RoundTimer.cs" />
+    <Compile Include="Services\AnswerWindowService.cs" />
     <Compile Include="Services\AudioCoordinator.cs" />
     <Compile Include="Services\ColorPickerService.cs" />
+    <Compile Include="Services\FeedbackService.cs" />
     <Compile Include="Services\FolderScanner.cs" />
     <Compile Include="Services\HeartbeatBridge.cs" />
     <Compile Include="Services\PressBridge.cs" />
@@ -130,6 +132,9 @@
     <Compile Include="ViewModels\SettingsTabViewModel.cs" />
     <Compile Include="ViewModels\TrackRowViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
+    <Compile Include="Views\AnswerWindow.xaml.cs">
+      <DependentUpon>AnswerWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\HostWindow.xaml.cs">
       <DependentUpon>HostWindow.xaml</DependentUpon>
     </Compile>
@@ -180,6 +185,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\AnswerWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\HostWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

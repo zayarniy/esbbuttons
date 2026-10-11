@@ -6,9 +6,16 @@ namespace GuessMelody.Views
 {
     public partial class HostWindow : Window
     {
+
+        public static HostWindow Current { get; private set; }
+
         public HostWindow()
         {
             InitializeComponent();
+
+            Current = this;
+            Closed += (s, e) => { if (Current == this) Current = null; };
+
             PreviewKeyDown += OnPreviewKeyDown;
         }
 

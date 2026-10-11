@@ -198,6 +198,10 @@
                             <TextBlock Text="Таймаут heartbeat кнопки, сек:" Width="260" VerticalAlignment="Center"/>
                             <TextBox Width="80" Text="{Binding HeartbeatTimeoutSec, UpdateSourceTrigger=LostFocus}"/>
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Пауза после «Нет» (перед музыкой), сек:" Width="260" VerticalAlignment="Center"/>
+                            <TextBox Width="80" Text="{Binding WrongFeedbackPauseSec, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
                     </StackPanel>
 
                     <!-- =============================================== -->
