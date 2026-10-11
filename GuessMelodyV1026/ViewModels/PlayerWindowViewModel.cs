@@ -57,6 +57,13 @@ namespace GuessMelody.ViewModels
     {
         public Team Team { get; }
 
+        private int _heartbeatPulse = -1;
+        public int HeartbeatPulse
+        {
+            get => _heartbeatPulse;
+            set => Set(ref _heartbeatPulse, value);
+        }
+
         private static readonly DispatcherTimer _globalPulseTimer = CreateGlobalTimer();
         private static readonly System.Collections.Generic.List<TeamTile> _pulsingTiles =
             new System.Collections.Generic.List<TeamTile>();
@@ -177,16 +184,26 @@ namespace GuessMelody.ViewModels
             {
                 switch (_engine.State)
                 {
-                    case RoundState.Idle: return "Ожидание";
-                    case RoundState.Countdown: return $"Отсчёт: {_engine.CountdownLeftSec:F0}";
-                    case RoundState.Playing: return "🎵 Играет фрагмент";
+                    case RoundState.Idle:
+                        return "Ожидание";
+                    case RoundState.Countdown:
+                        return $"Отсчёт: {_engine.CountdownLeftSec:F0}";
+                    case RoundState.Playing:
+                        return _engine.FirstPressedTeam != null
+                            ? $"Ответ: {_engine.FirstPressedTeam.Name}"
+                            : "🎵 Играет фрагмент";
                     case RoundState.WaitingForAnswer:
                         return _engine.FirstPressedTeam != null
-                                                         ? $"Ответ: {_engine.FirstPressedTeam.Name}"
-                                                         : "Ждём ответ";
-                    case RoundState.Scored: return "Очко начислено";
-                    case RoundState.Finished: return "Игра завершена";
-                    default: return "";
+                            ? $"⏸ Пауза — ответ: {_engine.FirstPressedTeam.Name}"
+                            : "⏸ Пауза";
+                    case RoundState.Wrong:
+                        return "❌ Неверный ответ";
+                    case RoundState.Scored:
+                        return "✅ Очко начислено";
+                    case RoundState.Finished:
+                        return "Игра завершена";
+                    default:
+                        return "";
                 }
             }
         }
@@ -215,6 +232,18 @@ namespace GuessMelody.ViewModels
         }
 
         // ---------------------------------------------------------
+        public double TrackRemainFraction
+        {
+            get
+            {
+                var total = _engine.TrackTotalSec;
+                if (total <= 0) return 0;
+                var left = _engine.TrackLeftSec;
+                if (left < 0) left = 0;
+                if (left > total) left = total;
+                return left / total;   // 1.0 → 0.0 по мере проигрывания
+            }
+        }
 
         private void OnSettingsChanged()
         {
@@ -277,6 +306,7 @@ namespace GuessMelody.ViewModels
             OnPropertyChanged(nameof(AnswerLeft));
             OnPropertyChanged(nameof(TrackLeft));
             OnPropertyChanged(nameof(TrackTotal));
+            OnPropertyChanged(nameof(TrackRemainFraction));
         }
 
         private void OnEngineScoreChanged()
@@ -372,10 +402,21 @@ namespace GuessMelody.ViewModels
         private void OnTeamHeartbeat(Team team)
         {
             if (team == null) return;
-            var tile = Teams.FirstOrDefault(x => x.Team.Mac == team.Mac);
-            tile?.PulseHeartbeat();
-        }
 
+            var tile = Teams.FirstOrDefault(x =>
+                string.Equals(x.Team.Mac, team.Mac, StringComparison.OrdinalIgnoreCase));
+
+            if (tile == null)
+            {
+                // Команда появилась в движке, но в UI её ещё нет.
+                // Аккуратно пересобираем коллекцию плиток — тогда плитка появится,
+                // но с HeartbeatPulse = -1 и без анимации.
+                RebuildFromSettings();
+                return;
+            }
+
+            tile.PulseHeartbeat();
+        }
         private void OnHeartbeatChanged()
         {
             foreach (var t in Teams) t.Refresh();

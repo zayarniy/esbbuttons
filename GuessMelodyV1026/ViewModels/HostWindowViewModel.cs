@@ -38,8 +38,15 @@ namespace GuessMelody.ViewModels
             _engine.Heartbeat += (s, team) =>
             {
                 if (team == null) return;
-                var tile = Teams.FirstOrDefault(x => x.Team.Mac == team.Mac);
-                tile?.PulseHeartbeat();
+                var tile = Teams.FirstOrDefault(x =>
+                    string.Equals(x.Team.Mac, team.Mac, StringComparison.OrdinalIgnoreCase));
+
+                if (tile == null)
+                {
+                    RefreshTeams();
+                    return;
+                }
+                tile.PulseHeartbeat();
             };
             _engine.HeartbeatChanged += (s, e) =>
             {

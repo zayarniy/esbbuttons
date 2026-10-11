@@ -6,6 +6,7 @@
         Countdown,
         Playing,
         WaitingForAnswer,
+        Wrong,
         Scored,
         Finished
     }

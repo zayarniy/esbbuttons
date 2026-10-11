@@ -62,6 +62,7 @@ namespace GuessMelody.Converters
                 case RoundState.WaitingForAnswer: return "Ждём ответ";
                 case RoundState.Scored: return "Очко начислено";
                 case RoundState.Finished: return "Завершено";
+                case RoundState.Wrong: return "Неверный ответ";
                 default: return s.ToString();
             }
         }

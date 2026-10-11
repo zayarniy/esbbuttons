@@ -227,14 +227,29 @@ namespace GuessMelody.Core
 
         public void PauseMusic()
         {
-            if (State == RoundState.Playing || State == RoundState.WaitingForAnswer)
+            if (State == RoundState.Playing ||
+                State == RoundState.WaitingForAnswer ||
+                State == RoundState.Wrong)
                 RequestPauseTrack?.Invoke(this, EventArgs.Empty);
         }
 
         public void ResumeMusic()
         {
-            if (State == RoundState.Playing || State == RoundState.WaitingForAnswer)
+            if (State == RoundState.WaitingForAnswer ||
+                State == RoundState.Wrong ||
+                State == RoundState.Playing)
+            {
                 RequestResumeTrack?.Invoke(this, EventArgs.Empty);
+
+                // Если мы были в состоянии «ждём решения после неверного ответа» —
+                // возвращаемся в игру и разблокируем команду, чтобы она могла нажать снова.
+                if (State == RoundState.Wrong)
+                {
+                    _blockedThisRound.Clear();   // снимаем блокировку — «Нет» можно отменить
+                    State = RoundState.Playing;
+                    RaiseState();
+                }
+            }
         }
 
         public void Panic()
@@ -299,9 +314,10 @@ namespace GuessMelody.Core
                 FirstPressed?.Invoke(this, team);
             }
 
-            if (State == RoundState.Playing)
-            {
-                RequestStopTrack?.Invoke(this, EventArgs.Empty);
+            if(State == RoundState.Playing)
+{
+                // Ставим на паузу, а не стоп — при «Нет» можно будет возобновить
+                RequestPauseTrack?.Invoke(this, EventArgs.Empty);
                 State = RoundState.WaitingForAnswer;
                 StartAnswerTimer();
                 RaiseState();
@@ -328,6 +344,7 @@ namespace GuessMelody.Core
         // -------------------------------------------------------------
         // Очки
         // -------------------------------------------------------------
+
         public void SubmitScore(bool correct)
         {
             if (FirstPressedTeam == null)
@@ -342,32 +359,39 @@ namespace GuessMelody.Core
                 FirstPressedTeam.Score += add;
                 _log.Add(LogKind.Score,
                     $"✅ {FirstPressedTeam.Name} +{add} → {FirstPressedTeam.Score}");
-                State = RoundState.Scored;
+
+                // Останавливаем музыку полностью — раунд окончен
+                RequestStopTrack?.Invoke(this, EventArgs.Empty);
                 _answerTimer.Stop();
+                State = RoundState.Scored;
                 RaiseState();
                 ScoreChanged?.Invoke(this, EventArgs.Empty);
+                return;
+            }
+
+            // ---- «Нет» ----
+            _log.Add(LogKind.Score, $"❌ {FirstPressedTeam.Name} — ответ неверный.");
+            _blockedThisRound.Add(FirstPressedTeam.Mac);
+            FirstPressedTeam = null;
+            _answerTimer.Stop();
+
+            if (Settings?.Rules?.AllowRePressAfterWrong == true)
+            {
+                // Разрешаем другим (и этому же) нажимать снова — сразу продолжаем музыку
+                State = RoundState.Playing;
+                RequestResumeTrack?.Invoke(this, EventArgs.Empty);
+                RaiseState();
             }
             else
             {
-                _log.Add(LogKind.Score, $"❌ {FirstPressedTeam.Name} — ответ неверный.");
-                _blockedThisRound.Add(FirstPressedTeam.Mac);
-                FirstPressedTeam = null;
-                _answerTimer.Stop();
-
-                if (Settings?.Rules?.AllowRePressAfterWrong == true)
-                {
-                    State = RoundState.Playing;
-                    RequestResumeTrack?.Invoke(this, EventArgs.Empty);
-                    RaiseState();
-                }
-                else
-                {
-                    State = RoundState.Scored;
-                    RaiseState();
-                }
+                // Ждём решения ведущего. Музыка на паузе.
+                // Если она ещё не была на паузе (например, игрок нажал при повторном запуске) —
+                // ставим на паузу принудительно.
+                RequestPauseTrack?.Invoke(this, EventArgs.Empty);
+                State = RoundState.Wrong;
+                RaiseState();
             }
         }
-
 
         // -------------------------------------------------------------
         // Управление командами на лету (эмуляция, отладка, привязка)

@@ -11,6 +11,10 @@ namespace GuessMelody.Audio
         private IWavePlayer _output;
         private AudioFileReader _reader;
 
+        private TimeSpan _pausedPosition = TimeSpan.Zero;
+        private bool _paused = false;
+
+
         private double _stopAtSec = -1;
         private bool _loop;
         private int _volumePercent = 80;
@@ -103,18 +107,70 @@ namespace GuessMelody.Audio
 
         public void Pause()
         {
-            if (_output == null) return;
-            _output.Pause();
-            IsPaused = true;
-            _positionTimer.Stop();
+            lock (_lock)
+            {
+                if (_output == null || _reader == null) return;
+                if (!IsPlaying || _paused) return;
+
+                try
+                {
+                    _output.Pause();
+                    _pausedPosition = _reader.CurrentTime;
+                    _paused = true;
+                    IsPaused = true;
+                    _positionTimer?.Stop();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("AudioEngine.Pause error: " + ex.Message);
+                }
+            }
         }
 
         public void Resume()
         {
-            if (_output == null) return;
-            _output.Play();
-            IsPaused = false;
-            _positionTimer.Start();
+            lock (_lock)
+            {
+                if (_output == null || _reader == null)
+                {
+                    // Плеер был полностью остановлен — ничего не сделаем на этом уровне,
+                    // координатор должен позаботиться о перезапуске.
+                    return;
+                }
+
+                try
+                {
+                    if (_paused)
+                    {
+                        // Продолжение на том же WaveOutEvent
+                        _output.Play();
+                        _paused = false;
+                        IsPaused = false;
+                        IsPlaying = true;
+                        _positionTimer?.Start();
+                        return;
+                    }
+
+                    // Резервный путь: если _paused по какой-то причине false,
+                    // но воспроизведение стоит — попробуем восстановить с _pausedPosition.
+                    if (!IsPlaying && _reader != null)
+                    {
+                        if (_pausedPosition > TimeSpan.Zero &&
+                            _pausedPosition < _reader.TotalTime)
+                        {
+                            _reader.CurrentTime = _pausedPosition;
+                        }
+                        _output.Play();
+                        IsPlaying = true;
+                        IsPaused = false;
+                        _positionTimer?.Start();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("AudioEngine.Resume error: " + ex.Message);
+                }
+            }
         }
 
         public void Stop()
@@ -138,10 +194,11 @@ namespace GuessMelody.Audio
 
                 IsPlaying = false;
                 IsPaused = false;
+                _paused = false;
+                _pausedPosition = TimeSpan.Zero;
                 CurrentFile = null;
             }
         }
-
         public void SetVolume(int percent)
         {
             _volumePercent = Math.Max(0, Math.Min(100, percent));
