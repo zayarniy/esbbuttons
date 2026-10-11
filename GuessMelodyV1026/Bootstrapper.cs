@@ -42,7 +42,7 @@ namespace GuessMelody
             services.AddSingleton<ColorPickerService>();
             services.AddSingleton<SettingsPresetService>();
             services.AddSingleton<HeartbeatBridge>();
-
+            services.AddSingleton<PressBridge>();
 
             return services.BuildServiceProvider();
         }

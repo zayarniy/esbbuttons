@@ -113,6 +113,7 @@
     <Compile Include="Services\ColorPickerService.cs" />
     <Compile Include="Services\FolderScanner.cs" />
     <Compile Include="Services\HeartbeatBridge.cs" />
+    <Compile Include="Services\PressBridge.cs" />
     <Compile Include="Services\SettingsPresetService.cs" />
     <Compile Include="ViewModels\PlayerWindowViewModel.cs" />
     <Compile Include="Services\RecentFilesService.cs" />

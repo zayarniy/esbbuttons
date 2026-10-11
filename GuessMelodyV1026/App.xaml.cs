@@ -62,10 +62,11 @@ namespace GuessMelody
             {
                 DataContext = Services.GetRequiredService<MainViewModel>()
             };
-            // Активировать мост heartbeat (создаётся лениво — принудительно резолвим)
-            Services.GetRequiredService<GuessMelody.Services.HeartbeatBridge>();
             MainWindow = main;
             main.Show();
+            // Активировать мост heartbeat (создаётся лениво — принудительно резолвим)
+            Services.GetRequiredService<GuessMelody.Services.HeartbeatBridge>();
+            Services.GetRequiredService<GuessMelody.Services.PressBridge>();
         }
 
         protected override void OnExit(ExitEventArgs e)
