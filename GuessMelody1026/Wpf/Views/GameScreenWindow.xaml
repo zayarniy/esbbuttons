@@ -1,0 +1,239 @@
+﻿<Window x:Class="GuessMelody.Wpf.Views.GameScreenWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Угадай мелодию — экран игроков"
+        Height="600" Width="800"
+        MinHeight="480" MinWidth="640"
+        WindowStyle="SingleBorderWindow"
+        ResizeMode="CanResizeWithGrip"
+        Background="Black"
+        WindowStartupLocation="CenterScreen"
+        KeyDown="Window_KeyDown">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- заголовок -->
+            <RowDefinition Height="*"/>
+            <!-- центр -->
+            <RowDefinition Height="Auto"/>
+            <!-- табло -->
+        </Grid.RowDefinitions>
+
+        <!-- ============================================================ -->
+        <!-- Заголовок                                                     -->
+        <!-- ============================================================ -->
+        <Border Grid.Row="0" Background="#101820" Padding="12,8">
+            <Grid>
+                <TextBlock Text="УГАДАЙ МЕЛОДИЮ"
+                           FontSize="28" FontWeight="Bold"
+                           Foreground="#FFD54A"
+                           HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding RoundInfoText}"
+                           FontSize="22" Foreground="#B0BEC5"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- ============================================================ -->
+        <!-- Центр — 5 состояний                                           -->
+        <!-- ============================================================ -->
+        <Grid Grid.Row="1" Margin="8">
+
+            <!-- ==== 1. Сетка категорий ==== -->
+            <ItemsControl ItemsSource="{Binding Categories}"
+                          Visibility="{Binding IsCategorySelect,
+                                       Converter={StaticResource BoolToVisibility}}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="3" Rows="3"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Margin="6" Padding="4"
+                                Background="#1E2A38"
+                                BorderBrush="#37474F" BorderThickness="2"
+                                Foreground="White"
+                                Tag="{Binding Index}"
+                                Click="Category_Click">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                            <Setter Property="Background" Value="#202020"/>
+                                            <Setter Property="Foreground" Value="#555"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                            <Setter Property="Background" Value="#FFD54A"/>
+                                            <Setter Property="Foreground" Value="#000"/>
+                                            <Setter Property="BorderBrush" Value="#FFF"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Номер -->
+                                <TextBlock Grid.Row="0"
+                                           Text="{Binding Index}"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Top"
+                                           FontSize="18" FontWeight="Bold"
+                                           Foreground="#FFD54A"
+                                           Margin="6,2,0,0"/>
+
+                                <!-- Имя -->
+                                <TextBlock Grid.Row="1"
+                                           Text="{Binding Name}"
+                                           FontSize="26" FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis"/>
+
+                                <!-- Счётчик треков -->
+                                <TextBlock Grid.Row="2"
+                                           Text="{Binding CounterText}"
+                                           FontSize="16"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,2,0,4"
+                                           Foreground="#B0BEC5"/>
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- ==== 2. Обратный отсчёт 3-2-1 ==== -->
+            <Grid Visibility="{Binding IsCountdown, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding CategoryName}"
+                               FontSize="34" FontWeight="Bold"
+                               Foreground="#FFD54A"
+                               HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                    <TextBlock Text="{Binding CountdownValue}"
+                               FontSize="200" FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- ==== 3. Играет трек (лампа серая) ==== -->
+            <Grid Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding CategoryName}"
+                               FontSize="34" FontWeight="Bold"
+                               Foreground="#FFD54A"
+                               HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                    <Border Width="420" Height="140"
+                            CornerRadius="14"
+                            Background="#37474F"
+                            BorderBrush="#546E7A" BorderThickness="3">
+                        <TextBlock Text="СЛУШАЙТЕ"
+                                   FontSize="42" FontWeight="Bold"
+                                   Foreground="#CFD8DC"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="Нажмите кнопку, если знаете"
+                               FontSize="20" Foreground="#90A4AE"
+                               HorizontalAlignment="Center" Margin="0,18,0,0"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- ==== 4. Кто-то нажал (лампа красная + отсчёт на ответ) ==== -->
+            <Grid Visibility="{Binding IsAnswer, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border Width="620" Height="200"
+                            CornerRadius="14"
+                            Background="#C62828"
+                            BorderBrush="#FF5252" BorderThickness="4">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="ОТВЕЧАЕТ"
+                                       FontSize="24" FontWeight="Bold"
+                                       Foreground="#FFCDD2"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding WinnerLabel}"
+                                       FontSize="56" FontWeight="Bold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="{Binding AnswerValue}"
+                               FontSize="120" FontWeight="Bold"
+                               Foreground="#FFD54A"
+                               HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                    <TextBlock Text="секунд на ответ"
+                               FontSize="20" Foreground="#90A4AE"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- ==== 5. Результат ==== -->
+            <Grid Visibility="{Binding IsResult, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding ResultText}"
+                               FontSize="72" FontWeight="Bold"
+                               HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#EF5350"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ResultOk}" Value="True">
+                                        <Setter Property="Foreground" Value="#66BB6A"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="{Binding WinnerLabel}"
+                               FontSize="36" Foreground="White"
+                               HorizontalAlignment="Center" Margin="0,20,0,0"/>
+                </StackPanel>
+            </Grid>
+
+        </Grid>
+
+        <!-- ============================================================ -->
+        <!-- Табло игроков                                                 -->
+        <!-- ============================================================ -->
+        <Border Grid.Row="2" Background="#101820" Padding="8">
+            <ItemsControl ItemsSource="{Binding Scores}" HorizontalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="6,0" Padding="12,6"
+                Background="#1E2A38" CornerRadius="8"
+                BorderBrush="#37474F" BorderThickness="1"
+                Tag="{Binding Mac}"
+                MouseLeftButtonUp="ScoreTile_LeftClick"
+                MouseRightButtonUp="ScoreTile_RightClick"
+                ToolTip="ЛКМ: +1   ПКМ: −1">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}"
+                           FontSize="22" Foreground="#ECEFF1"
+                           VerticalAlignment="Center" Margin="0,0,14,0"/>
+                                <TextBlock Text="{Binding Score}"
+                           FontSize="30" FontWeight="Bold"
+                           Foreground="#FFD54A"
+                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+    </Grid>
+</Window>

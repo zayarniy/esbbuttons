@@ -1,0 +1,105 @@
+﻿<UserControl x:Class="GuessMelody.Views.Tabs.AnswerServerTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="16" MaxWidth="900" HorizontalAlignment="Left">
+
+            <TextBlock Text="Сервер ответов" FontSize="20" FontWeight="Bold" Margin="0,0,0,4"/>
+            <TextBlock TextWrapping="Wrap" Foreground="#666" Margin="0,0,0,16"
+                       Text="Открывает веб-страницу в локальной сети — для соведущего. Он видит состояние игры, кто первый нажал, очки, остаток треков. И может жать Да/Нет/Следующий/Panic прямо с телефона или планшета. Страница автоматически обновляется каждую секунду."/>
+
+            <!-- Настройки -->
+            <GroupBox Header="Настройки" Padding="12" Margin="0,0,0,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Порт:" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                    <TextBox Grid.Row="0" Grid.Column="1" Width="100" HorizontalAlignment="Left"
+                             Text="{Binding Port, UpdateSourceTrigger=LostFocus}"
+                             IsEnabled="{Binding IsRunning, Converter={StaticResource BoolInverter}}"
+                             VerticalContentAlignment="Center" Margin="0,0,0,8"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Заголовок страницы:" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                    <TextBox Grid.Row="1" Grid.Column="1"
+                             Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalContentAlignment="Center" Margin="0,0,0,8"/>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Текст под заголовком:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Grid.Row="2" Grid.Column="1"
+                             Text="{Binding Placeholder, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalContentAlignment="Center"/>
+                </Grid>
+            </GroupBox>
+
+            <!-- Управление -->
+            <GroupBox Header="Управление" Padding="12" Margin="0,0,0,12">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="▶ Запустить"  Command="{Binding StartCommand}" Padding="14,6" Margin="0,0,8,0"
+                                Background="#C8E6C9"/>
+                        <Button Content="■ Остановить" Command="{Binding StopCommand}"  Padding="14,6" Margin="0,0,16,0"
+                                Background="#FFCDD2"/>
+                        <Button Content="Открыть в браузере" Command="{Binding OpenBrowserCommand}" Padding="14,6" Margin="0,0,4,0"/>
+                        <Button Content="Скопировать URL"    Command="{Binding CopyUrlCommand}"     Padding="14,6"/>
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding CurrentStatusLine}" FontWeight="Bold" Margin="0,4,0,4"/>
+                    <TextBlock Text="{Binding CurrentUrl}" FontFamily="Consolas" FontSize="14"
+                               Foreground="DarkBlue" TextWrapping="Wrap"/>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Подсказка -->
+            <GroupBox Header="Как подключиться с телефона" Padding="12" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                        <Run Text="1. Телефон подключён к той же Wi-Fi-сети, что и ноутбук (например, к точке доступа «QuizGame»)."/>
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                        <Run Text="2. Откройте браузер и введите адрес:"/>
+                    </TextBlock>
+                    <TextBlock Text="{Binding CurrentUrl}" FontFamily="Consolas"
+                               FontWeight="Bold" Foreground="DarkGreen" Margin="16,0,0,6" TextWrapping="Wrap"/>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,6" Foreground="#666">
+                        <Run Text="3. Если Windows Firewall спросит про доступ — разрешите для частных сетей."/>
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Foreground="#666">
+                        <Run Text="Если сервер не запускается на порту 8080, попробуйте запустить приложение от имени администратора или выполните один раз в PowerShell (от админа):"/>
+                    </TextBlock>
+                    <TextBlock FontFamily="Consolas" Margin="16,6,0,0" TextWrapping="Wrap" Foreground="#444"
+                               Text="netsh http add urlacl url=http://+:8080/ user=Everyone"/>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Что видно на странице -->
+            <GroupBox Header="Что видно на странице" Padding="12">
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
+                        • Текущий раунд и состояние (Ожидание / Отсчёт / Играет / Ждём ответ / Очко начислено)
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
+                        • Активная категория и текущий трек
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
+                        • Кто первый нажал — крупно
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
+                        • Очки игроков и остаток треков в каждой категории
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap">
+                        • Кнопки: ✅ Да, ❌ Нет, ⏭ Следующий, 🚨 PANIC
+                    </TextBlock>
+                </StackPanel>
+            </GroupBox>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

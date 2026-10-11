@@ -1,0 +1,221 @@
+﻿<Window x:Class="GuessMelody.Views.HostWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Окно ведущего" Height="800" Width="1280"
+        WindowStartupLocation="CenterScreen">
+
+    <DockPanel Margin="12">
+
+        <!-- Верх: управление раундом -->
+        <Border DockPanel.Dock="Top" Padding="12" Background="#F0F0F0"
+                BorderBrush="#CCC" BorderThickness="0,0,0,1">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="{Binding RoundText}" FontSize="22" FontWeight="Bold"
+                               VerticalAlignment="Center" Margin="0,0,20,0"/>
+                    <TextBlock Text="{Binding StateText}" FontSize="18" VerticalAlignment="Center"
+                               Foreground="#555" Margin="0,0,20,0"/>
+                    <TextBlock Text="{Binding FirstPressedText, StringFormat='Первый: {0}'}"
+                               FontSize="18" VerticalAlignment="Center" Foreground="#B00"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal">
+                    <ComboBox Width="260" Margin="0,0,8,0"
+                              ItemsSource="{Binding Categories}"
+                              DisplayMemberPath="Name"
+                              SelectedIndex="{Binding SelectedCategory}"/>
+                    <Button Content="▶ Старт раунда" Command="{Binding StartRoundCommand}" Padding="12,6" Margin="0,0,4,0"/>
+                    <Button Content="⏭ Следующий"   Command="{Binding NextRoundCommand}"  Padding="12,6" Margin="0,0,4,0"/>
+                    <Button Content="⏹ Завершить"   Command="{Binding EndRoundCommand}"   Padding="12,6" Margin="0,0,4,0"/>
+                    <Button Content="⏸ Пауза"       Command="{Binding PauseCommand}"      Padding="12,6" Margin="0,0,4,0"/>
+                    <Button Content="▶ Продолжить"  Command="{Binding ResumeCommand}"     Padding="12,6" Margin="0,0,16,0"/>
+
+                    <Button Content="✅ Да"  Command="{Binding YesCommand}" Padding="14,6"
+                            Background="#C8E6C9" Margin="0,0,4,0"/>
+                    <Button Content="❌ Нет" Command="{Binding NoCommand}"  Padding="14,6"
+                            Background="#FFCDD2" Margin="0,0,16,0"/>
+
+                    <Button Content="🚨 PANIC" Command="{Binding PanicCommand}" Padding="12,6"
+                            Background="#FFAB91"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Низ: табло -->
+        <Border DockPanel.Dock="Bottom" Padding="12" Background="#FAFAFA"
+                BorderBrush="#CCC" BorderThickness="0,1,0,0">
+            <StackPanel>
+                <TextBlock Text="Табло" FontWeight="Bold" Margin="0,0,0,6"/>
+                <ItemsControl ItemsSource="{Binding Teams}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="4" Padding="8" CornerRadius="6" Background="#FFFFFF"
+                                    BorderBrush="#CCC" BorderThickness="1">
+                                <StackPanel>
+
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+
+                                        <!-- Значок heartbeat -->
+                                        <TextBlock x:Name="HbDot"
+           Text="{Binding AliveGlyph}"
+           FontSize="14"
+           VerticalAlignment="Center"
+           Margin="0,0,6,0"
+           RenderTransformOrigin="0.5,0.5">
+                                            <TextBlock.RenderTransform>
+                                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                            </TextBlock.RenderTransform>
+
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#888"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsAlive}" Value="True">
+                                                            <Setter Property="Foreground" Value="#2E7D32"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsAlive}" Value="False">
+                                                            <Setter Property="Foreground" Value="#C62828"/>
+                                                        </DataTrigger>
+
+                                                        <DataTrigger Binding="{Binding IsPulsing}" Value="True">
+                                                            <DataTrigger.EnterActions>
+                                                                <BeginStoryboard x:Name="PulseSB">
+                                                                    <Storyboard>
+                                                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                 From="1.0" To="0.35"
+                                                 Duration="0:0:0.14"
+                                                 AutoReverse="True"/>
+                                                                        <DoubleAnimation
+                                    Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                    From="1.0" To="1.5"
+                                    Duration="0:0:0.14"
+                                    AutoReverse="True"/>
+                                                                        <DoubleAnimation
+                                    Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                    From="1.0" To="1.5"
+                                    Duration="0:0:0.14"
+                                    AutoReverse="True"/>
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </DataTrigger.EnterActions>
+                                                            <DataTrigger.ExitActions>
+                                                                <StopStoryboard BeginStoryboardName="PulseSB"/>
+                                                            </DataTrigger.ExitActions>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+
+                                        <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="Bold"
+                                                   TextAlignment="Center" VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <TextBlock Text="{Binding Score}" FontSize="28" FontWeight="Bold"
+                                               Foreground="DarkOrange"
+                                               TextAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Анимации строго здесь, не в Style -->
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding HeartbeatPulse}" Value="1">
+                                    <DataTrigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="HbDot"
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 From="1.0" To="0.3"
+                                                                 Duration="0:0:0.15"
+                                                                 AutoReverse="True"/>
+                                                <DoubleAnimation Storyboard.TargetName="HbDotScale"
+                                                                 Storyboard.TargetProperty="ScaleX"
+                                                                 From="1.0" To="1.5"
+                                                                 Duration="0:0:0.15"
+                                                                 AutoReverse="True"/>
+                                                <DoubleAnimation Storyboard.TargetName="HbDotScale"
+                                                                 Storyboard.TargetProperty="ScaleY"
+                                                                 From="1.0" To="1.5"
+                                                                 Duration="0:0:0.15"
+                                                                 AutoReverse="True"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.EnterActions>
+                                </DataTrigger>
+
+                                <DataTrigger Binding="{Binding HeartbeatPulse}" Value="0">
+                                    <DataTrigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="HbDot"
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 From="1.0" To="0.3"
+                                                                 Duration="0:0:0.15"
+                                                                 AutoReverse="True"/>
+                                                <DoubleAnimation Storyboard.TargetName="HbDotScale"
+                                                                 Storyboard.TargetProperty="ScaleX"
+                                                                 From="1.0" To="1.5"
+                                                                 Duration="0:0:0.15"
+                                                                 AutoReverse="True"/>
+                                                <DoubleAnimation Storyboard.TargetName="HbDotScale"
+                                                                 Storyboard.TargetProperty="ScaleY"
+                                                                 From="1.0" To="1.5"
+                                                                 Duration="0:0:0.15"
+                                                                 AutoReverse="True"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.EnterActions>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <!-- Центр -->
+        <Grid>
+            <StackPanel VerticalAlignment="Top" Margin="12">
+                <TextBlock Text="Текущий раунд" FontWeight="Bold" Foreground="#666"/>
+                <TextBlock Text="{Binding CategoryText, StringFormat='Категория: {0}'}"
+                           FontSize="18" Margin="0,4,0,4"/>
+                <TextBlock Text="{Binding TrackText, StringFormat='Трек: {0}'}"
+                           FontSize="14" Foreground="#555"/>
+
+                <TextBlock Text="{Binding TrackTimeText}" FontSize="22"
+                           FontWeight="Bold" Margin="0,12,0,4"/>
+                <ProgressBar Height="10" Minimum="0" Maximum="1"
+                             Value="{Binding TrackProgress, Mode=OneTime}"
+                             Foreground="DarkOrange" Width="500" HorizontalAlignment="Left"/>
+
+                <TextBlock Text="Остаток в категориях:" FontWeight="Bold" Margin="0,20,0,6"/>
+                <ItemsControl ItemsSource="{Binding Categories}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="0,2">
+                                <TextBlock Text="{Binding Name}" Width="200">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                    <Setter Property="Foreground" Value="DarkOrange"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="{Binding CountText}" Foreground="#555"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</Window>

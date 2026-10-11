@@ -1,0 +1,1 @@
+namespace GuessMelody.Wpf.Views { public partial class AnswerWindow : System.Windows.Window { public AnswerWindow() { InitializeComponent(); } } }

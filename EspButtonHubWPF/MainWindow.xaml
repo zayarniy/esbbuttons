@@ -1,0 +1,249 @@
+﻿<Window x:Class="EspButtonDiag.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:EspButtonDiag.Wpf.ViewModels"
+        Title="ESP8266 Диагностика кнопок"
+        Height="820" Width="1500"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <Style TargetType="TextBlock" x:Key="LogText">
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+
+        <!-- ============================================================ -->
+        <!-- Панель 1: порты, управление, экспорт                          -->
+        <!-- ============================================================ -->
+        <Border DockPanel.Dock="Top" Padding="8" Background="#F0F0F0"
+                BorderBrush="#CCC" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="UDP порт:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox Width="60"
+                         Text="{Binding ListenPort, UpdateSourceTrigger=PropertyChanged}"
+                         IsEnabled="{Binding IsRunning, Converter={x:Static vm:BoolInverter.Instance}}"
+                         VerticalContentAlignment="Center"/>
+
+                <TextBlock Text="ACK порт:" VerticalAlignment="Center" Margin="12,0,4,0"/>
+                <TextBox Width="60"
+                         Text="{Binding AckPort, UpdateSourceTrigger=PropertyChanged}"
+                         IsEnabled="{Binding IsRunning, Converter={x:Static vm:BoolInverter.Instance}}"
+                         VerticalContentAlignment="Center"/>
+
+                <TextBlock Text="Таймаут HB (с):" VerticalAlignment="Center" Margin="12,0,4,0"/>
+                <TextBox Width="50"
+                         Text="{Binding HeartbeatTimeoutSec, UpdateSourceTrigger=PropertyChanged}"
+                         IsEnabled="{Binding IsRunning, Converter={x:Static vm:BoolInverter.Instance}}"
+                         VerticalContentAlignment="Center"/>
+
+                <Button Content="▶ Запустить"  Command="{Binding StartCommand}"
+                        Margin="16,0,4,0" Padding="10,4"/>
+                <Button Content="■ Остановить" Command="{Binding StopCommand}"
+                        Margin="4,0,16,0" Padding="10,4"/>
+
+                <Button Content="⤓ CSV" Command="{Binding ExportCsvCommand}"
+                        Margin="0,0,4,0" Padding="10,4"/>
+                <Button Content="⤓ TXT" Command="{Binding ExportTxtCommand}"
+                        Margin="0,0,16,0" Padding="10,4"/>
+
+                <Button Content="Очистить журнал"  Command="{Binding ClearLogCommand}"
+                        Margin="0,0,4,0" Padding="10,4"/>
+                <Button Content="Очистить таблицу" Command="{Binding ClearButtonsCommand}"
+                        Margin="0,0,0,0" Padding="10,4"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ============================================================ -->
+        <!-- Панель 2: фильтры журнала | лампа | раунд                     -->
+        <!-- ============================================================ -->
+        <Border DockPanel.Dock="Top" Padding="8" Background="#FAFAFA"
+                BorderBrush="#CCC" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ==== Фильтры журнала ==== -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Журнал:" FontWeight="Bold"
+                               Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <CheckBox Content="Connect"    IsChecked="{Binding FilterShowConnect}"    Margin="0,0,6,0"/>
+                    <CheckBox Content="Reconnect"  IsChecked="{Binding FilterShowReconnect}"  Margin="0,0,6,0"/>
+                    <CheckBox Content="Disconnect" IsChecked="{Binding FilterShowDisconnect}" Margin="0,0,6,0"/>
+                    <CheckBox Content="Press"      IsChecked="{Binding FilterShowPress}"      Margin="0,0,6,0"/>
+                    <CheckBox Content="System"     IsChecked="{Binding FilterShowSystem}"     Margin="0,0,6,0"/>
+                    <CheckBox Content="Error"      IsChecked="{Binding FilterShowError}"      Margin="0,0,6,0"/>
+                    <CheckBox Content="Raw"        IsChecked="{Binding FilterShowRaw}"        Margin="0,0,0,0"/>
+                </StackPanel>
+
+                <!-- ==== Лампа-индикатор ==== -->
+                <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Width="260" Height="44" CornerRadius="6"
+                        BorderBrush="#333" BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#EEE"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding LampOn}" Value="True">
+                                    <Setter Property="Background" Value="#FF3030"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontSize="16" FontWeight="Bold">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#666"/>
+                                <Setter Property="Text" Value="— нет нажатий —"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding LampOn}" Value="True">
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="Text" Value="{Binding LampMac}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Border>
+
+                <!-- ==== Раунд ==== -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding CurrentRoundText}" VerticalAlignment="Center"
+                               FontWeight="Bold" Margin="0,0,8,0"/>
+                    <Button Content="▶ Старт раунда"  Command="{Binding StartRoundCommand}"  Padding="8,3" Margin="0,0,4,0"/>
+                    <Button Content="■ Финиш"         Command="{Binding FinishRoundCommand}" Padding="8,3" Margin="0,0,4,0"/>
+                    <Button Content="Очистить раунды" Command="{Binding ClearRoundsCommand}" Padding="8,3"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ============================================================ -->
+        <!-- Статус-бар                                                    -->
+        <!-- ============================================================ -->
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusText}"/>
+            </StatusBarItem>
+        </StatusBar>
+
+        <!-- ============================================================ -->
+        <!-- Основная область: 3 колонки                                   -->
+        <!-- ============================================================ -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2.2*"/>
+                <ColumnDefinition Width="2.2*"/>
+                <ColumnDefinition Width="2.0*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ===== Таблица кнопок ===== -->
+            <GroupBox Header="Подключённые кнопки" Grid.Column="0" Margin="6">
+                <DataGrid ItemsSource="{Binding Buttons}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal"
+                          AlternatingRowBackground="#FAFAFA">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Alive}" Value="False">
+                                    <Setter Property="Foreground" Value="#999"/>
+                                    <Setter Property="Background" Value="#FFF3E0"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Сост." Width="60"
+                                            Binding="{Binding Alive, Converter={x:Static vm:AliveConverter.Instance}}"/>
+                        <DataGridTextColumn Header="MAC" Binding="{Binding Mac}" Width="140"/>
+                        <DataGridTextColumn Header="IP" Binding="{Binding LastIp}" Width="120"/>
+                        <DataGridTextColumn Header="Нажатий" Binding="{Binding PressCount}" Width="70"/>
+
+                        <DataGridTextColumn Header="Доставка HB" Binding="{Binding DeliveryText}" Width="150">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="Black"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Rebooting}" Value="True">
+                                            <Setter Property="Foreground" Value="Blue"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding DeliveryPercent}" Value="100">
+                                            <Setter Property="Foreground" Value="Green"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="Посл. seq" Binding="{Binding LastSeq}" Width="80"/>
+                        <DataGridTextColumn Header="Uptime, ms" Binding="{Binding LastUptimeMs}" Width="90"/>
+                        <DataGridTextColumn Header="Первый раз" Binding="{Binding FirstSeenLocal}" Width="90"/>
+                        <DataGridTextColumn Header="Последний раз" Binding="{Binding LastSeenLocal}" Width="100"/>
+                        <DataGridTextColumn Header="Тишина, с" Binding="{Binding SecondsSinceLastSeen}" Width="80"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </GroupBox>
+
+            <!-- ===== Журнал ===== -->
+            <GroupBox Header="Журнал" Grid.Column="1" Margin="6">
+                <ListBox ItemsSource="{Binding LogView}"
+                         x:Name="LogList"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource LogText}"
+                                           Text="{Binding TimeText}"
+                                           Foreground="#888" Width="90"/>
+                                <TextBlock Style="{StaticResource LogText}"
+                                           Text="{Binding KindText}"
+                                           Width="80"
+                                           Foreground="{Binding Kind, Converter={x:Static vm:KindToBrushConverter.Instance}}"/>
+                                <TextBlock Style="{StaticResource LogText}"
+                                           Text="{Binding Message}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </GroupBox>
+
+            <!-- ===== Раунды ===== -->
+            <GroupBox Header="Раунды (кто первый)" Grid.Column="2" Margin="6">
+                <DataGrid ItemsSource="{Binding Rounds}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal"
+                          AlternatingRowBackground="#FAFAFA">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="#"      Binding="{Binding Round}"         Width="40"/>
+                        <DataGridTextColumn Header="Время"  Binding="{Binding ReceivedLocal}" Width="90"/>
+                        <DataGridTextColumn Header="MAC"    Binding="{Binding Mac}"           Width="140"/>
+                        <DataGridTextColumn Header="seq"    Binding="{Binding Seq}"           Width="50"/>
+                        <DataGridTextColumn Header="uptime" Binding="{Binding UptimeMs}"      Width="80"/>
+                        <DataGridTextColumn Header="IP"     Binding="{Binding ReceivedIp}"    Width="110"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </GroupBox>
+        </Grid>
+    </DockPanel>
+</Window>

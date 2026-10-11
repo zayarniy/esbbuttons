@@ -1,0 +1,26 @@
+﻿<Application x:Class="GuessMelody.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:GuessMelody"
+             xmlns:conv="clr-namespace:GuessMelody.Converters"
+             
+              ShutdownMode="OnMainWindowClose"
+             >
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- Converters -->
+            <conv:Converters x:Key="BoolInverter"/>
+            <conv:LogKindToBrush x:Key="LogKindToBrush"/>
+            <conv:RoundStateToText x:Key="RoundStateToText"/>
+            <conv:AliveConverter x:Key="AliveConverter"/>
+            <conv:NullToVisibilityConverter x:Key="NullToVisibility"/>
+
+            <!-- Общий стиль журнала -->
+            <Style TargetType="TextBlock" x:Key="LogText">
+                <Setter Property="FontFamily" Value="Consolas"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="TextWrapping" Value="NoWrap"/>
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

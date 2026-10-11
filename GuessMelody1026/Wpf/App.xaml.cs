@@ -1,0 +1,1 @@
+namespace GuessMelody.Wpf { public partial class App : System.Windows.Application { } }

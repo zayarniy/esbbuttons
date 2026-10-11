@@ -1,0 +1,128 @@
+﻿<UserControl x:Class="GuessMelody.Wpf.Tabs.LogsTabView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ===== Верхняя панель ===== -->
+        <Border Grid.Row="0" Background="#F0F0F0" Padding="8"
+                BorderBrush="#CCC" BorderThickness="1" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Показывать:" FontWeight="Bold"
+                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <CheckBox Content="Raw"   IsChecked="{Binding ShowRaw}"   Margin="0,0,6,0"/>
+                <CheckBox Content="Info"  IsChecked="{Binding ShowInfo}"  Margin="0,0,6,0"/>
+                <CheckBox Content="State" IsChecked="{Binding ShowState}" Margin="0,0,6,0"/>
+                <CheckBox Content="Press" IsChecked="{Binding ShowPress}" Margin="0,0,6,0"/>
+                <CheckBox Content="Score" IsChecked="{Binding ShowScore}" Margin="0,0,6,0"/>
+                <CheckBox Content="Error" IsChecked="{Binding ShowError}" Margin="0,0,6,0"/>
+
+                <Separator Width="1" Margin="12,0" Background="#AAA"/>
+
+                <Button Content="🗑 Очистить журнал" Click="ClearLog_Click"
+                        Padding="10,4" Margin="0,0,6,0"/>
+                <Button Content="⤓ Журнал в CSV"  Click="ExportLogCsv_Click"
+                        Padding="10,4" Margin="0,0,6,0"/>
+                <Button Content="⤓ Журнал в TXT"  Click="ExportLogTxt_Click"
+                        Padding="10,4" Margin="0,0,6,0"/>
+
+                <Separator Width="1" Margin="12,0" Background="#AAA"/>
+
+                <Button Content="⤓ Раунды в CSV" Click="ExportRoundsCsv_Click"
+                        Padding="10,4" Margin="0,0,6,0"/>
+                <Button Content="🗑 Очистить историю раундов" Click="ClearRounds_Click"
+                        Padding="10,4"/>
+
+                <TextBlock x:Name="CountText" Margin="20,0,0,0"
+                           VerticalAlignment="Center" Foreground="#666"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== Основная область ===== -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Журнал -->
+            <GroupBox Grid.Column="0" Header="Журнал" Margin="0,0,6,0">
+                <ListBox x:Name="LogList"
+                         ItemsSource="{Binding Entries}"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding TimeText}" Width="90"
+                                           FontFamily="Consolas" Foreground="#888"/>
+                                <TextBlock Text="{Binding LevelText}" Width="60"
+                                           FontFamily="Consolas"
+                                           Foreground="{Binding Level,
+                                               Converter={StaticResource LevelToBrush}}"/>
+                                <TextBlock Text="{Binding Message}"
+                                           FontFamily="Consolas"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </GroupBox>
+
+            <!-- Правая колонка: раунды + статистика -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <GroupBox Grid.Row="0" Header="История раундов">
+                    <DataGrid x:Name="RoundsGrid"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#FAFAFA">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="#"       Binding="{Binding RoundNumber}" Width="36"/>
+                            <DataGridTextColumn Header="Категория" Binding="{Binding Category}" Width="120"/>
+                            <DataGridTextColumn Header="Трек"    Binding="{Binding TrackFile}" Width="200"/>
+                            <DataGridTextColumn Header="Победитель" Binding="{Binding WinnerName}" Width="120"/>
+                            <DataGridTextColumn Header="Балл"    Binding="{Binding ScoreText}" Width="60"/>
+                            <DataGridTextColumn Header="Итог"    Binding="{Binding Reason}" Width="120"/>
+                            <DataGridTextColumn Header="Ответ, с"
+                                                Binding="{Binding AnswerTimeSec, StringFormat={}{0:F1}}"
+                                                Width="70"/>
+                            <DataGridTextColumn Header="Время"   Binding="{Binding FinishedLocal}" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+
+                <GroupBox Grid.Row="1" Header="Итоги" Margin="0,8,0,0">
+                    <StackPanel Margin="4">
+                        <TextBlock x:Name="StatsText" TextWrapping="Wrap"
+                                   FontFamily="Consolas"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Grid.Row="2" Header="Победы по игрокам" Margin="0,8,0,0">
+                    <DataGrid x:Name="WinsGrid"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              HeadersVisibility="Column">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Игрок" Binding="{Binding Key}" Width="200"/>
+                            <DataGridTextColumn Header="Побед" Binding="{Binding Value}" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

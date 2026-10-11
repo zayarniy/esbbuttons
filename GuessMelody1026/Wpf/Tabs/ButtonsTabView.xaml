@@ -1,0 +1,88 @@
+﻿<UserControl x:Class="GuessMelody.Wpf.Tabs.ButtonsTabView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Верхняя панель -->
+        <Border Grid.Row="0" Padding="8" Background="#F0F0F0"
+                BorderBrush="#CCC" BorderThickness="1" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="UDP порт:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox x:Name="PortBox" Width="70" Text="41234"
+                         VerticalContentAlignment="Center" Margin="0,0,12,0"/>
+
+                <Button Content="▶ Старт"  Click="Start_Click" Padding="10,4" Margin="0,0,6,0"/>
+                <Button Content="■ Стоп"   Click="Stop_Click"  Padding="10,4" Margin="0,0,20,0"/>
+
+                <Button Content="📂 Загрузить привязки" Click="LoadBindings_Click"
+                        Padding="10,4" Margin="0,0,6,0"/>
+                <Button Content="💾 Сохранить привязки" Click="SaveBindings_Click"
+                        Padding="10,4" Margin="0,0,20,0"/>
+
+                <TextBlock Text="Эмулировать MAC:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox x:Name="EmuMacBox" Width="180"
+                         VerticalContentAlignment="Center" Margin="0,0,6,0"
+                         Text="24:4C:AB:6C:8F:3D"/>
+                <Button Content="🔴 Нажать" Click="Emulate_Click" Padding="10,4"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Лампа -->
+        <Border Grid.Row="1" Height="60" CornerRadius="6" Margin="0,0,0,8"
+                BorderBrush="#333" BorderThickness="1" x:Name="LampBorder">
+            <TextBlock x:Name="LampText" HorizontalAlignment="Center"
+                       VerticalAlignment="Center" FontSize="22" FontWeight="Bold"
+                       Foreground="#666" Text="— нет нажатий —"/>
+        </Border>
+
+        <!-- Таблица + журнал -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+
+            <GroupBox Grid.Column="0" Header="Подключённые кнопки" Margin="0,0,6,0">
+                <DataGrid x:Name="ButtonsGrid"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="False"
+                          CanUserAddRows="False"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal"
+                          AlternatingRowBackground="#FAFAFA"
+                          CellEditEnding="ButtonsGrid_CellEditEnding">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Alive}" Value="False">
+                                    <Setter Property="Foreground" Value="#999"/>
+                                    <Setter Property="Background" Value="#FFF3E0"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="MAC" Binding="{Binding Mac}" Width="140" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Имя игрока" Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+                        <DataGridTextColumn Header="Слот" Binding="{Binding PlayerSlot, UpdateSourceTrigger=PropertyChanged}" Width="50"/>
+                        <DataGridTextColumn Header="IP" Binding="{Binding LastIp}" Width="120" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Статус" Binding="{Binding Alive}" Width="60" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Доставка" Binding="{Binding DeliveryPercent, StringFormat={}{0:F1}%}" Width="80" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Нажатий" Binding="{Binding PressCount}" Width="70" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="seq" Binding="{Binding LastSeq}" Width="70" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Тишина, с" Binding="{Binding SecondsSinceLastSeen, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </GroupBox>
+
+            <GroupBox Grid.Column="1" Header="Журнал">
+                <ListBox x:Name="LogList" FontFamily="Consolas" FontSize="12"/>
+            </GroupBox>
+        </Grid>
+    </Grid>
+</UserControl>

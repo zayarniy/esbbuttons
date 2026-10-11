@@ -1,0 +1,1 @@
+namespace GuessMelody.Wpf.Views { public partial class HostConsole : System.Windows.Window { public HostConsole() { InitializeComponent(); } } }

@@ -1,0 +1,95 @@
+﻿<UserControl x:Class="GuessMelody.Wpf.Tabs.SettingsTabView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+
+            <!-- ===== Смена сервера ===== -->
+            <GroupBox Header="Сменить сервер (IP, куда кнопки шлют данные)"
+                      Padding="10" Margin="0,0,0,12">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Новый IP:" VerticalAlignment="Center"
+                                   Width="100"/>
+                        <TextBox x:Name="NewServerIpBox" Width="220"
+                                 VerticalContentAlignment="Center"
+                                 Text="192.168.137.1"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="📡 Разослать ВСЕМ (broadcast)"
+                                Click="SendServerAll_Click"
+                                Padding="10,4" Margin="0,0,8,0"/>
+                        <Button Content="✉ Отправить ВЫБРАННЫМ"
+                                Click="SendServerSelected_Click"
+                                Padding="10,4"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- ===== Смена Wi-Fi ===== -->
+            <GroupBox Header="Сменить Wi-Fi (применятся после перезагрузки кнопки)"
+                      Padding="10" Margin="0,0,0,12">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="SSID:" VerticalAlignment="Center" Width="100"/>
+                        <TextBox x:Name="NewSsidBox" Width="320"
+                                 VerticalContentAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Пароль:" VerticalAlignment="Center" Width="100"/>
+                        <TextBox x:Name="NewPassBox" Width="320"
+                                 VerticalContentAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="📡 Разослать ВСЕМ (broadcast)"
+                                Click="SendWifiAll_Click"
+                                Padding="10,4" Margin="0,0,8,0"/>
+                        <Button Content="🔄 REBOOT выбранных"
+                                Click="SendReboot_Click"
+                                Padding="10,4"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- ===== Выбор кнопок ===== -->
+            <GroupBox Header="Выбор кнопок" Padding="10" Margin="0,0,0,12">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="Отметить все"  Click="SelectAll_Click"
+                                Padding="8,3" Margin="0,0,4,0"/>
+                        <Button Content="Снять все"    Click="DeselectAll_Click"
+                                Padding="8,3" Margin="0,0,4,0"/>
+                        <Button Content="Только живые" Click="SelectAlive_Click"
+                                Padding="8,3"/>
+                    </StackPanel>
+                    <DataGrid x:Name="SelectGrid"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              MaxHeight="300">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="✓" Width="30"
+                                Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"/>
+                            <DataGridTextColumn Header="MAC" Binding="{Binding Mac}"
+                                                Width="160" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Имя" Binding="{Binding DisplayName}"
+                                                Width="140" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="IP"  Binding="{Binding LastIp}"
+                                                Width="130" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Жив" Binding="{Binding Alive}"
+                                                Width="60" IsReadOnly="True"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- ===== Отклик от кнопок ===== -->
+            <GroupBox Header="Отклик от кнопок" Padding="10">
+                <ListBox x:Name="AckLogList" Height="160"
+                         FontFamily="Consolas" FontSize="12"/>
+            </GroupBox>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

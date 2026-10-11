@@ -1,0 +1,1 @@
+namespace GuessMelody.Wpf.Views { public partial class GameScreen : System.Windows.Window { public GameScreen() { InitializeComponent(); } } }

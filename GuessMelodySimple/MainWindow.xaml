@@ -1,0 +1,145 @@
+﻿<Window x:Class="GuessMelodySimple.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GuessMelodySimple"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Панель управления -->
+            <RowDefinition Height="*"/>
+            <!-- Игроки -->
+            <RowDefinition Height="Auto"/>
+            <!-- Плеер -->
+            <RowDefinition Height="Auto"/>
+            <!-- Статус -->
+        </Grid.RowDefinitions>
+
+        <!-- ============ Верхняя панель управления ============ -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+            <Button x:Name="BtnPickFolder" Content="📁 Папка с музыкой"
+                    Padding="10,6" Click="BtnPickFolder_Click"/>
+            <TextBlock x:Name="TxtFolder" VerticalAlignment="Center"
+                       Margin="12,0,20,0" Foreground="#666"/>
+
+            <Button x:Name="BtnNewRound" Content="🎵 Новый раунд"
+                    Padding="14,6" FontWeight="Bold"
+                    Click="BtnNewRound_Click"/>
+
+            <TextBlock x:Name="TxtTracksLeft" VerticalAlignment="Center"
+                       Margin="20,0,0,0" FontSize="16" FontWeight="Bold" Foreground="#2266AA"
+                       Text="🎵 Осталось: 0 из 0"/>
+        </StackPanel>
+
+        <!-- ============ Игроки ============ -->
+        <UniformGrid Grid.Row="1" Rows="1" Columns="3" Margin="0,0,0,12">
+            <!-- Игрок 0 -->
+            <Border x:Name="PlayerCard0" Margin="8" CornerRadius="10"
+                    BorderBrush="#333" BorderThickness="2" Background="#F5F5F5">
+                <Border.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="+1 балл" Click="PlusOne_Click" Tag="0"/>
+                        <MenuItem Header="−1 балл" Click="MinusOne_Click" Tag="0"/>
+                    </ContextMenu>
+                </Border.ContextMenu>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBox x:Name="PlayerName0" FontSize="24" FontWeight="Bold"
+                             TextAlignment="Center" BorderThickness="0"
+                             Background="Transparent" Width="220"
+                             Text="Игрок 1" TextChanged="PlayerName_TextChanged" Tag="0"/>
+                    <TextBlock x:Name="PlayerScore0" Text="0"
+                               FontSize="72" FontWeight="Bold"
+                               HorizontalAlignment="Center" Foreground="#333"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Игрок 1 -->
+            <Border x:Name="PlayerCard1" Margin="8" CornerRadius="10"
+                    BorderBrush="#333" BorderThickness="2" Background="#F5F5F5">
+                <Border.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="+1 балл" Click="PlusOne_Click" Tag="1"/>
+                        <MenuItem Header="−1 балл" Click="MinusOne_Click" Tag="1"/>
+                    </ContextMenu>
+                </Border.ContextMenu>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBox x:Name="PlayerName1" FontSize="24" FontWeight="Bold"
+                             TextAlignment="Center" BorderThickness="0"
+                             Background="Transparent" Width="220"
+                             Text="Игрок 2" TextChanged="PlayerName_TextChanged" Tag="1"/>
+                    <TextBlock x:Name="PlayerScore1" Text="0"
+                               FontSize="72" FontWeight="Bold"
+                               HorizontalAlignment="Center" Foreground="#333"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Игрок 2 -->
+            <Border x:Name="PlayerCard2" Margin="8" CornerRadius="10"
+                    BorderBrush="#333" BorderThickness="2" Background="#F5F5F5">
+                <Border.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="+1 балл" Click="PlusOne_Click" Tag="2"/>
+                        <MenuItem Header="−1 балл" Click="MinusOne_Click" Tag="2"/>
+                    </ContextMenu>
+                </Border.ContextMenu>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBox x:Name="PlayerName2" FontSize="24" FontWeight="Bold"
+                             TextAlignment="Center" BorderThickness="0"
+                             Background="Transparent" Width="220"
+                             Text="Игрок 3" TextChanged="PlayerName_TextChanged" Tag="2"/>
+                    <TextBlock x:Name="PlayerScore2" Text="0"
+                               FontSize="72" FontWeight="Bold"
+                               HorizontalAlignment="Center" Foreground="#333"/>
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!-- ============ Плеер ============ -->
+        <Border Grid.Row="2" BorderBrush="#CCC" BorderThickness="1"
+                CornerRadius="6" Padding="8" Margin="0,0,0,8">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <Button x:Name="BtnPlay"     Content="▶"   Width="42" Padding="4" Click="BtnPlay_Click"/>
+                    <Button x:Name="BtnPause"    Content="⏸"  Width="42" Padding="4" Click="BtnPause_Click"    Margin="4,0,0,0"/>
+                    <Button x:Name="BtnResume"   Content="▶▶" Width="42" Padding="4" Click="BtnResume_Click"   Margin="4,0,0,0"/>
+                    <Button x:Name="BtnStop"     Content="⏹"  Width="42" Padding="4" Click="BtnStop_Click"     Margin="4,0,0,0"/>
+
+                    <TextBlock x:Name="TxtPosition" VerticalAlignment="Center"
+                               Margin="12,0,0,0" Foreground="#666">0:00 / 0:00</TextBlock>
+
+                    <Button x:Name="BtnShowAnswer" Content="❓ Показать ответ"
+                            Padding="10,4" Margin="20,0,0,0"
+                            Click="BtnShowAnswer_Click"/>
+
+                    <Button x:Name="BtnRoundCorrect" Content="✔ Верно"
+                            Padding="10,4" Margin="8,0,0,0"
+                            Background="#AADDAA"
+                            Click="BtnRoundCorrect_Click"/>
+
+                    <Button x:Name="BtnContinueRound" Content="⏭ Продолжить"
+                            Padding="10,4" Margin="4,0,0,0"
+                            Background="#FFDDAA"
+                            Click="BtnContinueRound_Click"/>
+                </StackPanel>
+
+                <Slider x:Name="SliderPosition" Minimum="0" Maximum="1"
+                        Thumb.DragStarted="SliderPosition_DragStarted"
+                        Thumb.DragCompleted="SliderPosition_DragCompleted"
+                        ValueChanged="SliderPosition_ValueChanged"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ============ Статус-бар ============ -->
+        <StatusBar Grid.Row="3">
+            <StatusBarItem>
+                <TextBlock x:Name="TxtStatus" Text="Готово"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock x:Name="TxtNowPlaying" Foreground="#888"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>

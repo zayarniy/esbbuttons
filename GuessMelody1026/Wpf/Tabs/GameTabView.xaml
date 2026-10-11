@@ -1,0 +1,201 @@
+﻿<UserControl x:Class="GuessMelody.Wpf.Tabs.GameTabView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:GuessMelody.Core.Models">
+    <UserControl.Resources>
+        <Style TargetType="TextBlock" x:Key="Label">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+        </Style>
+        <Style TargetType="TextBox" x:Key="NumBox">
+            <Setter Property="Width" Value="80"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <GroupBox Header="Раунд" Padding="10" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0"
+                                   Style="{StaticResource Label}" Text="Играть трек, сек:"/>
+                        <TextBox Grid.Row="0" Grid.Column="1"
+                                 Style="{StaticResource NumBox}"
+                                 Text="{Binding PlayDurationSec, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Margin="10,0,0,0"
+                                   VerticalAlignment="Center" Foreground="#777"
+                                   Text="(0 = до конца или до нажатия)"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0"
+                                   Style="{StaticResource Label}"
+                                   Text="Стартовая позиция:" Margin="0,8,8,0"/>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                    Orientation="Horizontal" Margin="0,8,0,0">
+                            <ComboBox SelectedValue="{Binding StartAtMode}"
+                                      SelectedValuePath="Tag" Width="220">
+                                
+                                <ComboBoxItem Content="С начала"
+                                              Tag="{x:Static models:StartAtMode.FromBeginning}"/>
+                                <ComboBoxItem Content="Со случайного места"
+                                              Tag="{x:Static models:StartAtMode.FromRandomPlace}"/>
+                                <ComboBoxItem Content="С определённой секунды"
+                                              Tag="{x:Static models:StartAtMode.FromSpecificTime}"/>
+                                                            </ComboBox>
+                            <TextBlock Style="{StaticResource Label}" Text="сек:"
+                                       Margin="14,0,4,0"/>
+                            <TextBox Style="{StaticResource NumBox}"
+                                     IsEnabled="{Binding IsSpecificStart}"
+                                     Text="{Binding StartAtSec, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+
+                <GroupBox Header="Звук начала нового раунда" Padding="10" Margin="0,0,0,10">
+                    <StackPanel>
+                        <CheckBox Content="Проигрывать звук старта раунда"
+                                  IsChecked="{Binding PlayRoundStartSound}" Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource Label}" Text="Файл:"/>
+                            <TextBox Width="500"
+                                     Text="{Binding RoundStartSoundFile, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center"/>
+                            <Button Content="…" Click="PickRoundStart_Click"
+                                    Padding="8,2" Margin="4,0,4,0"/>
+                            <Button Content="▶" Click="TestRoundStart_Click" Padding="8,2"/>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Обратный отсчёт перед раундом" Padding="10" Margin="0,0,0,10">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <CheckBox Content="Проигрывать обратный отсчёт"
+                                      IsChecked="{Binding PlayCountdown}" Margin="0,0,20,0"/>
+                            <TextBlock Style="{StaticResource Label}" Text="Секунд:"/>
+                            <TextBox Style="{StaticResource NumBox}"
+                                     Text="{Binding CountdownSeconds, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Style="{StaticResource Label}" Text="Тик:" Width="40"/>
+                            <TextBox Width="500"
+                                     Text="{Binding CountdownTickSoundFile, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center"/>
+                            <Button Content="…" Click="PickTick_Click"
+                                    Padding="8,2" Margin="4,0,4,0"/>
+                            <Button Content="▶" Click="TestTick_Click" Padding="8,2"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource Label}" Text="Финал:" Width="40"/>
+                            <TextBox Width="500"
+                                     Text="{Binding CountdownEndSoundFile, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center"/>
+                            <Button Content="…" Click="PickEnd_Click"
+                                    Padding="8,2" Margin="4,0,4,0"/>
+                            <Button Content="▶" Click="TestEnd_Click" Padding="8,2"/>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Обратный отсчёт на ответ" Padding="10" Margin="0,0,0,10">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Style="{StaticResource Label}" Text="Секунд на ответ:"/>
+                            <TextBox Style="{StaticResource NumBox}"
+                                     Text="{Binding AnswerSeconds, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource Label}" Text="Тик:" Width="40"/>
+                            <TextBox Width="500"
+                                     Text="{Binding AnswerTickSoundFile, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center"/>
+                            <Button Content="…" Click="PickAnswerTick_Click"
+                                    Padding="8,2" Margin="4,0,4,0"/>
+                            <Button Content="▶" Click="TestAnswerTick_Click" Padding="8,2"/>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Звуки результата" Padding="10" Margin="0,0,0,10">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Style="{StaticResource Label}" Text="Правильно:" Width="90"/>
+                            <TextBox Width="450"
+                                     Text="{Binding RightSoundFile, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center"/>
+                            <Button Content="…" Click="PickRight_Click"
+                                    Padding="8,2" Margin="4,0,4,0"/>
+                            <Button Content="▶" Click="TestRight_Click" Padding="8,2"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource Label}" Text="Неправильно:" Width="90"/>
+                            <TextBox Width="450"
+                                     Text="{Binding WrongSoundFile, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center"/>
+                            <Button Content="…" Click="PickWrong_Click"
+                                    Padding="8,2" Margin="4,0,4,0"/>
+                            <Button Content="▶" Click="TestWrong_Click" Padding="8,2"/>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Раунды и автопереход" Padding="10" Margin="0,0,0,10">
+                    <StackPanel>
+                        <CheckBox Content="Автоматически начинать следующий раунд"
+                                  IsChecked="{Binding AutoNextRound}" Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource Label}"
+                                       Text="Максимум раундов:"/>
+                            <TextBox Style="{StaticResource NumBox}"
+                                     Text="{Binding MaxRounds, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+                                       Foreground="#777" Text="(0 = без ограничения)"/>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Сетка категорий на экране" Padding="10" Margin="0,0,0,10">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource Label}" Text="Столбцов:"/>
+                        <TextBox Style="{StaticResource NumBox}"
+                                 Text="{Binding GridColumns, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource Label}" Text="Строк:" Margin="20,0,8,0"/>
+                        <TextBox Style="{StaticResource NumBox}"
+                                 Text="{Binding GridRows, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </GroupBox>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="1" Padding="8" Background="#F0F0F0"
+                BorderBrush="#CCC" BorderThickness="0,1,0,0" Margin="0,10,0,0">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="💾 Сохранить" Click="Save_Click"
+                        Padding="12,6" Margin="0,0,6,0"/>
+                <Button Content="📥 Загрузить" Click="Load_Click"
+                        Padding="12,6" Margin="0,0,20,0"/>
+                <Button Content="↺ Сбросить к дефолтным" Click="Reset_Click"
+                        Padding="12,6" Margin="0,0,20,0"/>
+                <TextBlock x:Name="PathText" VerticalAlignment="Center"
+                           Foreground="#666"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

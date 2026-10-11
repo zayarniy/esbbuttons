@@ -1,0 +1,85 @@
+﻿<Window x:Class="GuessMelody.Wpf.AudioTestWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Аудио-тест (NAudio)"
+        Height="520" Width="780"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- файл -->
+            <RowDefinition Height="Auto"/>
+            <!-- плеер -->
+            <RowDefinition Height="Auto"/>
+            <!-- прогресс -->
+            <RowDefinition Height="Auto"/>
+            <!-- позиция -->
+            <RowDefinition Height="Auto"/>
+            <!-- громкость -->
+            <RowDefinition Height="Auto"/>
+            <!-- one-shot -->
+            <RowDefinition Height="*"/>
+            <!-- лог -->
+        </Grid.RowDefinitions>
+
+        <!-- ==== Выбор файла ==== -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <Button Content="📂 Открыть файл…" Click="OpenFile_Click" Padding="10,4"/>
+            <TextBox x:Name="FileBox" Width="500" Margin="10,0,0,0"
+                     VerticalContentAlignment="Center" IsReadOnly="True"/>
+        </StackPanel>
+
+        <!-- ==== Управление плеером ==== -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <Button Content="▶ Play"  Click="Play_Click"  Padding="14,4" Margin="0,0,6,0"/>
+            <Button Content="⏸ Pause" Click="Pause_Click" Padding="14,4" Margin="0,0,6,0"/>
+            <Button Content="⏹ Stop"  Click="Stop_Click"  Padding="14,4" Margin="0,0,6,0"/>
+            <Button Content="⏪ −10 c" Click="Back10_Click" Padding="10,4" Margin="10,0,6,0"/>
+            <Button Content="⏩ +10 c" Click="Fwd10_Click" Padding="10,4"/>
+            <TextBlock x:Name="StateText" Margin="20,0,0,0"
+                       VerticalAlignment="Center" FontWeight="Bold"/>
+        </StackPanel>
+
+        <!-- ==== Прогресс ==== -->
+        <ProgressBar Grid.Row="2" x:Name="Progress" Height="22"
+                     Minimum="0" Maximum="1000"
+                     Margin="0,0,0,6"/>
+
+        <!-- ==== Позиция (ползунок) ==== -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Позиция:" VerticalAlignment="Center" Width="70"/>
+            <Slider x:Name="PosSlider" Width="400"
+                    Minimum="0" Maximum="1000"
+                    TickFrequency="10"
+                    IsMoveToPointEnabled="True"
+                    ValueChanged="PosSlider_ValueChanged"/>
+            <TextBlock x:Name="TimeText" Margin="10,0,0,0"
+                       VerticalAlignment="Center" FontFamily="Consolas"/>
+        </StackPanel>
+
+        <!-- ==== Громкость ==== -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Громкость:" VerticalAlignment="Center" Width="90"/>
+            <Slider x:Name="VolSlider" Width="300"
+                    Minimum="0" Maximum="1" Value="1"
+                    ValueChanged="VolSlider_ValueChanged"/>
+            <TextBlock x:Name="VolText" Margin="10,0,0,0"
+                       VerticalAlignment="Center" FontFamily="Consolas"/>
+        </StackPanel>
+
+        <!-- ==== One-shot ==== -->
+        <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Звук поверх:" VerticalAlignment="Center" Width="90"/>
+            <Button Content="Открыть и проиграть…" Click="OpenOneShot_Click" Padding="10,4"/>
+            <Button Content="🔔 Тик" Click="PlayTick_Click" Padding="10,4" Margin="10,0,0,0"/>
+            <Button Content="✅ Right" Click="PlayRight_Click" Padding="10,4" Margin="6,0,0,0"/>
+            <Button Content="❌ Wrong" Click="PlayWrong_Click" Padding="10,4" Margin="6,0,0,0"/>
+        </StackPanel>
+
+        <!-- ==== Лог ==== -->
+        <GroupBox Grid.Row="6" Header="Лог" Margin="0,6,0,0">
+            <ListBox x:Name="LogList" FontFamily="Consolas" FontSize="12"/>
+        </GroupBox>
+    </Grid>
+</Window>

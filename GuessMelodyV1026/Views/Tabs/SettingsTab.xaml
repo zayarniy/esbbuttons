@@ -1,0 +1,338 @@
+﻿<UserControl x:Class="GuessMelody.Views.Tabs.SettingsTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel Margin="6">
+
+        <!-- Верхняя панель -->
+        <Border DockPanel.Dock="Top" Padding="6" Background="#F0F0F0"
+                BorderBrush="#CCC" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="✔ Применить" Command="{Binding ApplyCommand}"
+                        Padding="12,4" Margin="0,0,8,0" Background="#C8E6C9"/>
+                <Button Content="↺ К умолчанию" Command="{Binding ResetDefaultsCommand}"
+                        Padding="12,4" Margin="0,0,20,0"/>
+            </StackPanel>
+        </Border>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="180"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Список разделов -->
+            <ListBox x:Name="SectionsList" Grid.Column="0" Margin="0,0,8,0"
+                     SelectionChanged="SectionsList_SelectionChanged">
+                <ListBoxItem Content="Игра"            Tag="game"/>
+                <ListBoxItem Content="Звуки"           Tag="audio"/>
+                <ListBoxItem Content="Тайминги"        Tag="timings"/>
+                <ListBoxItem Content="Внешний вид"     Tag="appearance"/>
+                <ListBoxItem Content="Пресеты"         Tag="presets"/>
+            </ListBox>
+
+            <!-- Область содержимого -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                <Grid>
+
+                    <!-- =============================================== -->
+                    <!-- Раздел Игра                                     -->
+                    <!-- =============================================== -->
+                    <StackPanel x:Name="PanelGame" Visibility="Visible">
+                        <TextBlock Text="Настройки игры" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Игроков (2..6):" Width="220" VerticalAlignment="Center"/>
+                            <TextBox Width="80" Text="{Binding PlayerCount, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Раундов (0 — без ограничения):" Width="220" VerticalAlignment="Center"/>
+                            <TextBox Width="80" Text="{Binding RoundCount, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Длительность фрагмента, сек:" Width="220" VerticalAlignment="Center"/>
+                            <TextBox Width="80" Text="{Binding FragmentSec, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Старт по умолчанию, сек:" Width="220" VerticalAlignment="Center"/>
+                            <TextBox Width="80" Text="{Binding DefaultStartSec, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+
+                        <CheckBox Content="Начинать со случайного места" IsChecked="{Binding RandomStart}" Margin="0,0,0,6"/>
+                        <CheckBox Content="Обратный отсчёт на ответ" IsChecked="{Binding CountdownOnAnswer}" Margin="0,0,0,6"/>
+                        <CheckBox Content="Очки можно начислять после неверного ответа (повторные нажатия)"
+                                  IsChecked="{Binding AllowRePress}" Margin="0,0,0,6"/>
+                        <CheckBox Content="Режим «Настройка» — очки не считаются"
+                                  IsChecked="{Binding IsSetupMode}" Margin="0,0,0,6"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Очков за правильный ответ:" Width="220" VerticalAlignment="Center"/>
+                            <TextBox Width="80" Text="{Binding ScorePerCorrect, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- =============================================== -->
+                    <!-- Раздел Звуки                                    -->
+                    <!-- =============================================== -->
+                    <StackPanel x:Name="PanelAudio" Visibility="Collapsed">
+                        <TextBlock Text="Звуки" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="Общая громкость:" Width="160" VerticalAlignment="Center"/>
+                            <Slider Width="240" Minimum="0" Maximum="100" Value="{Binding Volume}"
+                                    TickFrequency="1" IsSnapToTickEnabled="True"/>
+                            <TextBlock Text="{Binding Volume}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="%" Margin="2,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <GroupBox Header="Файлы звуков" Padding="8" Margin="0,0,0,12">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Buzzer (нажатие):" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="1" Text="{Binding BuzzerPath, UpdateSourceTrigger=PropertyChanged}"
+                                             VerticalContentAlignment="Center" Margin="4,0"/>
+                                    <Button Grid.Column="2" Content="…" Command="{Binding PickBuzzerCommand}"
+                                            Width="30" Margin="0,0,4,0"/>
+                                    <Button Grid.Column="3" Content="▶" Command="{Binding TestBuzzerCommand}" Width="30"/>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Правильный:" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="1" Text="{Binding CorrectPath, UpdateSourceTrigger=PropertyChanged}"
+                                             VerticalContentAlignment="Center" Margin="4,0"/>
+                                    <Button Grid.Column="2" Content="…" Command="{Binding PickCorrectCommand}"
+                                            Width="30" Margin="0,0,4,0"/>
+                                    <Button Grid.Column="3" Content="▶" Command="{Binding TestCorrectCommand}" Width="30"/>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Неправильный:" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="1" Text="{Binding WrongPath, UpdateSourceTrigger=PropertyChanged}"
+                                             VerticalContentAlignment="Center" Margin="4,0"/>
+                                    <Button Grid.Column="2" Content="…" Command="{Binding PickWrongCommand}"
+                                            Width="30" Margin="0,0,4,0"/>
+                                    <Button Grid.Column="3" Content="▶" Command="{Binding TestWrongCommand}" Width="30"/>
+                                </Grid>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Тик таймера:" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="1" Text="{Binding TickPath, UpdateSourceTrigger=PropertyChanged}"
+                                             VerticalContentAlignment="Center" Margin="4,0"/>
+                                    <Button Grid.Column="2" Content="…" Command="{Binding PickTickCommand}"
+                                            Width="30" Margin="0,0,4,0"/>
+                                    <Button Grid.Column="3" Content="▶" Command="{Binding TestTickCommand}" Width="30"/>
+                                </Grid>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Эффекты" Padding="8">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <TextBlock Text="Fade-in, мс:" Width="160" VerticalAlignment="Center"/>
+                                    <TextBox Width="80" Text="{Binding FadeInMs, UpdateSourceTrigger=LostFocus}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <TextBlock Text="Fade-out, мс:" Width="160" VerticalAlignment="Center"/>
+                                    <TextBox Width="80" Text="{Binding FadeOutMs, UpdateSourceTrigger=LostFocus}"/>
+                                </StackPanel>
+                                <CheckBox Content="Тикать в последние 5 секунд" IsChecked="{Binding TickLast5}"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+
+                    <!-- =============================================== -->
+                    <!-- Раздел Тайминги                                 -->
+                    <!-- =============================================== -->
+                    <StackPanel x:Name="PanelTimings" Visibility="Collapsed">
+                        <TextBlock Text="Тайминги" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Отсчёт перед музыкой, сек:" Width="260" VerticalAlignment="Center"/>
+                            <TextBox Width="80" Text="{Binding CountdownBeforeSec, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Время на ответ, сек (0 — без ограничения):" Width="260" VerticalAlignment="Center"/>
+                            <TextBox Width="80" Text="{Binding AnswerTimeoutSec, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Пауза после нажатия, мс:" Width="260" VerticalAlignment="Center"/>
+                            <TextBox Width="80" Text="{Binding PauseAfterPressMs, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Пауза между раундами, сек:" Width="260" VerticalAlignment="Center"/>
+                            <TextBox Width="80" Text="{Binding PauseBetweenRoundsSec, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+
+                        <CheckBox Content="Автоматически переходить к следующему раунду"
+                                  IsChecked="{Binding AutoNextRound}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Таймаут heartbeat кнопки, сек:" Width="260" VerticalAlignment="Center"/>
+                            <TextBox Width="80" Text="{Binding HeartbeatTimeoutSec, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- =============================================== -->
+                    <!-- Раздел Внешний вид                              -->
+                    <!-- =============================================== -->
+                    <StackPanel x:Name="PanelAppearance" Visibility="Collapsed">
+                        <TextBlock Text="Внешний вид" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                        <GroupBox Header="Экран игроков" Padding="8" Margin="0,0,0,12">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Цвет фона:" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="1" Width="60" Height="24" Margin="4,0"
+                                            Background="{Binding BgPreviewBrush}"
+                                            BorderBrush="#888" BorderThickness="1"/>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <TextBox Width="100" Text="{Binding PlayerBgColor, UpdateSourceTrigger=LostFocus}"
+                                                 VerticalContentAlignment="Center" Margin="0,0,4,0"/>
+                                        <Button Content="Выбрать…" Command="{Binding PickBgColorCommand}" Padding="8,2"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Акцент (подсветка):" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="1" Width="60" Height="24" Margin="4,0"
+                                            Background="{Binding AccentPreviewBrush}"
+                                            BorderBrush="#888" BorderThickness="1"/>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <TextBox Width="100" Text="{Binding PlayerAccentColor, UpdateSourceTrigger=LostFocus}"
+                                                 VerticalContentAlignment="Center" Margin="0,0,4,0"/>
+                                        <Button Content="Выбрать…" Command="{Binding PickAccentColorCommand}" Padding="8,2"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Цвет текста:" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="1" Width="60" Height="24" Margin="4,0"
+                                            Background="{Binding TextPreviewBrush}"
+                                            BorderBrush="#888" BorderThickness="1"/>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <TextBox Width="100" Text="{Binding PlayerTextColor, UpdateSourceTrigger=LostFocus}"
+                                                 VerticalContentAlignment="Center" Margin="0,0,4,0"/>
+                                        <Button Content="Выбрать…" Command="{Binding PickTextColorCommand}" Padding="8,2"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,6">
+                                    <TextBlock Text="Размер шрифта категорий:" Width="200" VerticalAlignment="Center"/>
+                                    <Slider Width="240" Minimum="12" Maximum="120" Value="{Binding CategoryFontSize}"
+                                            TickFrequency="2" IsSnapToTickEnabled="True"/>
+                                    <TextBlock Text="{Binding CategoryFontSize}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <TextBlock Text="Размер шрифта имён игроков:" Width="200" VerticalAlignment="Center"/>
+                                    <Slider Width="240" Minimum="12" Maximum="120" Value="{Binding PlayerNameFontSize}"
+                                            TickFrequency="2" IsSnapToTickEnabled="True"/>
+                                    <TextBlock Text="{Binding PlayerNameFontSize}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <TextBlock Text="Размер шрифта очков:" Width="200" VerticalAlignment="Center"/>
+                                    <Slider Width="240" Minimum="12" Maximum="160" Value="{Binding PlayerScoreFontSize}"
+                                            TickFrequency="2" IsSnapToTickEnabled="True"/>
+                                    <TextBlock Text="{Binding PlayerScoreFontSize}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Главное окно" Padding="8">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <TextBlock Text="Тема:" Width="160" VerticalAlignment="Center"/>
+                                    <ComboBox Width="140" SelectedValue="{Binding AppTheme}">
+                                        <ComboBoxItem Content="Light"/>
+                                        <ComboBoxItem Content="Dark"/>
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Размер шрифта журнала:" Width="160" VerticalAlignment="Center"/>
+                                    <TextBox Width="60" Text="{Binding LogFontSize, UpdateSourceTrigger=LostFocus}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+
+                    <!-- =============================================== -->
+                    <!-- Раздел Пресеты                                  -->
+                    <!-- =============================================== -->
+                    <StackPanel x:Name="PanelPresets" Visibility="Collapsed">
+                        <TextBlock Text="Пресеты настроек" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="#666" Margin="0,0,0,12"
+                                   Text="Пресет хранит настройки разделов «Игра», «Звуки», «Тайминги» и «Внешний вид». Удобно для разных игр (детская, взрослая, новогодняя и т.п.)."/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="Имя пресета:" Width="120" VerticalAlignment="Center"/>
+                            <TextBox Width="220" Text="{Binding PresetName, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center" Margin="0,0,4,0"/>
+                            <Button Content="💾 Сохранить" Command="{Binding SavePresetCommand}"
+                                    Padding="10,4" Margin="0,0,4,0"/>
+                            <Button Content="↻ Обновить список" Command="{Binding RefreshPresetsCommand}"
+                                    Padding="10,4"/>
+                        </StackPanel>
+
+                        <TextBlock Text="Сохранённые пресеты:" FontWeight="Bold" Margin="0,0,0,6"/>
+                        <StackPanel Orientation="Horizontal">
+                            <ListBox Width="240" Height="160"
+                                     ItemsSource="{Binding PresetNames}"
+                                     SelectedItem="{Binding SelectedPreset}"/>
+                            <StackPanel Margin="12,0,0,0" VerticalAlignment="Top">
+                                <Button Content="Загрузить" Command="{Binding LoadPresetCommand}"
+                                        Padding="10,4" Margin="0,0,0,6" Width="120"/>
+                                <Button Content="Удалить" Command="{Binding DeletePresetCommand}"
+                                        Padding="10,4" Width="120"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+    </DockPanel>
+</UserControl>

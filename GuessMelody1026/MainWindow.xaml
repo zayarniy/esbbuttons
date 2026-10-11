@@ -1,0 +1,52 @@
+﻿<Window x:Class="GuessMelody.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GuessMelody"
+        xmlns:tabs="clr-namespace:GuessMelody.Wpf.Tabs"
+        mc:Ignorable="d"
+        Title="Угадай мелодию — настройки"
+        Height="900" Width="1400"
+        WindowStartupLocation="CenterScreen">
+
+    <DockPanel>
+
+        <!-- ===== Статус-бар ===== -->
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusText" Text="Готов"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock x:Name="ServerStatusText" Foreground="#666"/>
+            </StatusBarItem>
+        </StatusBar>
+
+        <!-- ===== Вкладки ===== -->
+
+        <TabControl x:Name="MainTabs" Margin="4"
+                    SelectionChanged="MainTabs_SelectionChanged">
+            <TabItem Header="🚀 Запуск">
+                <tabs:LaunchTabView x:Name="LaunchTab"/>
+            </TabItem>
+            <TabItem Header="🎵 Игра">
+                <tabs:GameTabView x:Name="GameTab"/>
+            </TabItem>
+
+            <TabItem Header="🎮 Кнопки">
+                <tabs:ButtonsTabView x:Name="ButtonsTab"/>
+            </TabItem>
+
+            <TabItem Header="⚙ Настройки">
+                <tabs:SettingsTabView x:Name="SettingsTab"/>
+            </TabItem>
+
+            <TabItem Header="📁 Папки">
+                <tabs:FoldersTabView x:Name="FoldersTab"/>
+            </TabItem>
+            <TabItem Header="📋 Логи">
+                <tabs:LogsTabView x:Name="LogsTab"/>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

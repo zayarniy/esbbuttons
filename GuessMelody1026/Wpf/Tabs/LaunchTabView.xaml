@@ -1,0 +1,115 @@
+﻿<UserControl x:Class="GuessMelody.Wpf.Tabs.LaunchTabView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- сервер -->
+            <RowDefinition Height="Auto"/>
+            <!-- окна -->
+            <RowDefinition Height="Auto"/>
+            <!-- раунды -->
+            <RowDefinition Height="*"/>
+            <!-- лог -->
+        </Grid.RowDefinitions>
+
+        <!-- ===== Сервер ===== -->
+        <GroupBox Grid.Row="0" Header="UDP сервер кнопок" Padding="10" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Порт:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox x:Name="PortBox" Width="70" Text="41234"
+                         VerticalContentAlignment="Center" Margin="0,0,12,0"/>
+
+                <Button Content="▶ Запустить сервер" Click="StartServer_Click"
+                        Padding="12,6" Margin="0,0,6,0"/>
+                <Button Content="■ Остановить" Click="StopServer_Click"
+                        Padding="12,6" Margin="0,0,20,0"/>
+
+                <TextBlock x:Name="ServerStatusText" VerticalAlignment="Center"
+                           Foreground="#666" Text="⚪ остановлен"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- ===== Окна ===== -->
+        <GroupBox Grid.Row="1" Header="Игровые окна" Padding="10" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Экран игроков -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Экран игроков:"
+                           VerticalAlignment="Center" Width="180" Margin="0,0,8,6"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" x:Name="ScreenStatus"
+                           VerticalAlignment="Center" Foreground="#666"
+                           Text="закрыт" Margin="0,0,8,6"/>
+                <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Margin="0,0,0,6">
+                    <Button Content="Открыть"  Click="OpenScreen_Click"  Padding="10,4" Margin="0,0,4,0"/>
+                    <Button Content="Закрыть"  Click="CloseScreen_Click" Padding="10,4" Margin="0,0,12,0"/>
+                    <Button Content="⛶ На весь экран" Click="FullscreenScreen_Click" Padding="10,4"/>
+                </StackPanel>
+
+                <!-- Дубль -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Дубль для помощника:"
+                           VerticalAlignment="Center" Width="180" Margin="0,0,8,6"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="MirrorStatus"
+                           VerticalAlignment="Center" Foreground="#666"
+                           Text="закрыт" Margin="0,0,8,6"/>
+                <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Margin="0,0,0,6">
+                    <Button Content="Открыть"  Click="OpenMirror_Click"  Padding="10,4" Margin="0,0,4,0"/>
+                    <Button Content="Закрыть"  Click="CloseMirror_Click" Padding="10,4"/>
+                </StackPanel>
+
+                <!-- Пульт -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Пульт ведущего:"
+                           VerticalAlignment="Center" Width="180"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="HostStatus"
+                           VerticalAlignment="Center" Foreground="#666"
+                           Text="закрыт" Margin="0,0,8,0"/>
+                <StackPanel Grid.Row="2" Grid.Column="2" Orientation="Horizontal">
+                    <Button Content="Открыть"  Click="OpenHost_Click"  Padding="10,4" Margin="0,0,4,0"/>
+                    <Button Content="Закрыть"  Click="CloseHost_Click" Padding="10,4"/>
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+
+        <!-- ===== Управление раундом (аварийное, если пульт недоступен) ===== -->
+        <GroupBox Grid.Row="2" Header="Быстрое управление (для тестов)" Padding="10" Margin="0,0,0,12">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="Начать раунд (категория):" VerticalAlignment="Center"
+                               Margin="0,0,8,0"/>
+                    <Button Content="1" Click="StartCat1_Click" Padding="8,4" Margin="0,0,4,0"/>
+                    <Button Content="2" Click="StartCat2_Click" Padding="8,4" Margin="0,0,4,0"/>
+                    <Button Content="3" Click="StartCat3_Click" Padding="8,4" Margin="0,0,4,0"/>
+                    <Button Content="4" Click="StartCat4_Click" Padding="8,4" Margin="0,0,4,0"/>
+                    <Button Content="5" Click="StartCat5_Click" Padding="8,4" Margin="0,0,4,0"/>
+                    <Button Content="6" Click="StartCat6_Click" Padding="8,4" Margin="0,0,4,0"/>
+                    <Button Content="7" Click="StartCat7_Click" Padding="8,4" Margin="0,0,4,0"/>
+                    <Button Content="8" Click="StartCat8_Click" Padding="8,4" Margin="0,0,4,0"/>
+                    <Button Content="9" Click="StartCat9_Click" Padding="8,4" Margin="0,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="✅ Да (+2)"  Click="HostYes_Click" Padding="10,4" Margin="0,0,4,0"/>
+                    <Button Content="❌ Нет"      Click="HostNo_Click"  Padding="10,4" Margin="0,0,4,0"/>
+                    <Button Content="🚫 Никто"    Click="HostNoOne_Click" Padding="10,4" Margin="0,0,20,0"/>
+                    <Button Content="🗑 Сбросить очки" Click="ResetScores_Click" Padding="10,4" Margin="0,0,4,0"/>
+                    <Button Content="↺ Сбросить игру"   Click="ResetGame_Click"   Padding="10,4"/>
+                </StackPanel>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- ===== Лог ===== -->
+        <GroupBox Grid.Row="3" Header="Лог">
+            <ListBox x:Name="LogList" FontFamily="Consolas" FontSize="12"/>
+        </GroupBox>
+    </Grid>
+</UserControl>

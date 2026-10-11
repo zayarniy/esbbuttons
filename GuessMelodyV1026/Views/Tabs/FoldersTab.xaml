@@ -1,0 +1,196 @@
+﻿<UserControl x:Class="GuessMelody.Views.Tabs.FoldersTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel Margin="6">
+
+        <!-- Верхняя панель -->
+        <Border DockPanel.Dock="Top" Padding="6" Background="#F0F0F0"
+                BorderBrush="#CCC" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="Корневая папка:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <Button Content="Выбрать папку…" Command="{Binding BrowseFolderCommand}"
+                            Padding="10,4" Margin="0,0,8,0"/>
+                    <TextBox Width="420" Text="{Binding RootFolder, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                    <Button Content="🔄 Обновить" Command="{Binding RefreshCommand}" Padding="10,4"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <TextBlock Text="Пресет:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Width="140" Text="{Binding PresetName, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                    <Button Content="Загрузить" Command="{Binding LoadCommand}" Padding="8,3" Margin="0,0,4,0"/>
+                    <Button Content="Сохранить" Command="{Binding SaveCommand}" Padding="8,3"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Основная область: 3 панели -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.2*"/>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="2.2*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 1. Категории -->
+            <GroupBox Header="Категории" Grid.Column="0" Margin="4">
+                <ListBox ItemsSource="{Binding Categories}"
+                         SelectedItem="{Binding SelectedCategory}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding CountText}" Foreground="#777" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </GroupBox>
+
+            <!-- 2. Треки -->
+            <GroupBox Header="Треки" Grid.Column="1" Margin="4">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                        <Button Content="🎲 Случайный" Command="{Binding RandomTrackCommand}"
+                                Padding="8,3" Margin="0,0,4,0"/>
+                        <Button Content="⏹ Стоп preview" Command="{Binding StopPreviewCommand}"
+                                Padding="8,3"/>
+                    </StackPanel>
+                    <DataGrid ItemsSource="{Binding Tracks}"
+                              SelectedItem="{Binding SelectedTrack}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#FAFAFA">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="" Width="30" Binding="{Binding UnsupportedMark}" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="" Width="30" Binding="{Binding OverrideMark}" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Файл" Binding="{Binding FileName}" Width="*" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Длит." Binding="{Binding DurationText}" Width="70" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Размер" Binding="{Binding SizeText}" Width="80" IsReadOnly="True"/>
+                            <DataGridTemplateColumn Header="" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="▶ Слушать"
+                                                Command="{Binding DataContext.PreviewCommand,
+                                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                Padding="4,2"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </GroupBox>
+
+            <!-- 3. Настройки выбранного трека -->
+            <GroupBox Header="Настройки трека" Grid.Column="2" Margin="4">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="{Binding SelectedTrack.FileName}"
+                                   FontWeight="Bold" TextWrapping="Wrap"
+                                   Margin="0,0,0,4"/>
+                        <TextBlock Text="{Binding SelectedTrack.RelativePath}"
+                                   Foreground="#777" TextWrapping="Wrap"
+                                   Margin="0,0,0,12"/>
+
+                        <CheckBox Content="Использовать настройки по умолчанию"
+                                  IsChecked="{Binding UseDefaults}"
+                                  Margin="0,0,0,12"/>
+
+                        <GroupBox Header="Старт фрагмента, сек" Margin="0,0,0,6" Padding="6">
+                            <StackPanel Orientation="Horizontal">
+                                <Slider Width="200" Minimum="0" Maximum="3600"
+                                        Value="{Binding StartSec}"
+                                        IsEnabled="{Binding OverridesEnabled}"
+                                        TickFrequency="1" IsSnapToTickEnabled="True"/>
+                                <TextBox Width="70" Margin="8,0,0,0"
+                                         Text="{Binding StartSec, UpdateSourceTrigger=LostFocus, StringFormat=F1}"
+                                         IsEnabled="{Binding OverridesEnabled}"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Длительность фрагмента, сек" Margin="0,0,0,6" Padding="6">
+                            <StackPanel Orientation="Horizontal">
+                                <Slider Width="200" Minimum="1" Maximum="120"
+                                        Value="{Binding DurationSec}"
+                                        IsEnabled="{Binding OverridesEnabled}"
+                                        TickFrequency="1" IsSnapToTickEnabled="True"/>
+                                <TextBox Width="70" Margin="8,0,0,0"
+                                         Text="{Binding DurationSec, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
+                                         IsEnabled="{Binding OverridesEnabled}"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Громкость" Margin="0,0,0,6" Padding="6">
+                            <StackPanel Orientation="Horizontal">
+                                <Slider Width="200" Minimum="0" Maximum="100"
+                                        Value="{Binding Volume}"
+                                        IsEnabled="{Binding OverridesEnabled}"
+                                        TickFrequency="1" IsSnapToTickEnabled="True"/>
+                                <TextBlock Text="{Binding Volume}" Margin="8,0,0,0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <CheckBox Content="Повторять фрагмент"
+                                  IsChecked="{Binding Loop}"
+                                  IsEnabled="{Binding OverridesEnabled}"
+                                  Margin="0,0,0,6"/>
+                        <CheckBox Content="Начинать со случайного места"
+                                  IsChecked="{Binding RandomStart}"
+                                  IsEnabled="{Binding OverridesEnabled}"
+                                  Margin="0,0,0,12"/>
+
+                        <Button Content="↺ Сбросить override у трека"
+                                Command="{Binding ResetTrackCommand}"
+                                Padding="8,3" Margin="0,0,0,12"/>
+
+                        <Separator Margin="0,0,0,8"/>
+
+                        <!-- Preview -->
+                        <TextBlock Text="Прослушивание" FontWeight="Bold" Margin="0,0,0,4"/>
+                        <ProgressBar Height="12" Minimum="0"
+                                     Maximum="{Binding PreviewDurationSec}"
+                                     Value="{Binding PreviewPositionSec}"
+                                     Margin="0,0,0,4"/>
+                        <Button Content="⏹ Стоп" Command="{Binding StopPreviewCommand}"
+                                HorizontalAlignment="Left" Padding="8,3"/>
+
+                        <Separator Margin="0,12,0,8"/>
+
+                        <!-- Defaults -->
+                        <TextBlock Text="По умолчанию (для всех треков)" FontWeight="Bold"
+                                   Margin="0,0,0,6"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <TextBlock Text="Старт, сек:" Width="120"/>
+                            <TextBox Width="80" Text="{Binding Defaults.StartSec, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <TextBlock Text="Длительность, сек:" Width="120"/>
+                            <TextBox Width="80" Text="{Binding Defaults.DurationSec, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <TextBlock Text="Громкость:" Width="120"/>
+                            <TextBox Width="80" Text="{Binding Defaults.Volume, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+
+                        <Button Content="⚠ Снять все override со всех треков"
+                                Command="{Binding ApplyDefaultsToAllCommand}"
+                                Padding="8,3" Margin="0,12,0,0"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </GroupBox>
+        </Grid>
+    </DockPanel>
+</UserControl>
