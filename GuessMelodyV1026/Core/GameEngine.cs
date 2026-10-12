@@ -74,6 +74,12 @@ namespace GuessMelody.Core
         public event EventHandler RequestStopTrack;
         public event EventHandler RequestPauseTrack;
         public event EventHandler RequestResumeTrack;
+        public event EventHandler<string> MacSeen;
+
+        /// <summary>Пришёл HB или нажатие от MAC, которого нет ни в одной команде.
+        /// Используется, чтобы UI мог предложить «привязать к команде X».</summary>
+        public event EventHandler<string> UnknownMacSeen;
+
 
         public GameEngine(LogService log)
         {
@@ -195,6 +201,53 @@ namespace GuessMelody.Core
             }
         }
 
+        /// <summary>Уведомить об увиденном MAC (HB/press от неизвестной кнопки).</summary>
+        public void NotifyUnknownMac(string mac)
+        {
+            if (string.IsNullOrWhiteSpace(mac)) return;
+            bool known = Settings?.Buttons?.Teams?.Any(t =>
+                string.Equals(t.Mac, mac, StringComparison.OrdinalIgnoreCase)) == true;
+            if (!known)
+                MacSeen?.Invoke(this, mac);
+
+        }
+        /// <summary>Пересоздать команды с id 1..N с пустыми MAC (для быстрого старта).</summary>
+        public void SetPlayerCount(int count)
+        {
+            if (!CanEditTeams) return;
+            if (count < 1) count = 1;
+            if (count > 12) count = 12;
+
+            if (Settings.Buttons == null) Settings.Buttons = new ButtonsMap();
+
+            // Удаляем лишние
+            var toRemove = Settings.Buttons.Teams.Where(t => t.Id > count).ToList();
+            foreach (var t in toRemove)
+                Settings.Buttons.Teams.Remove(t);
+
+            // Добавляем недостающие
+            for (int i = Settings.Buttons.Teams.Count + 1; i <= count; i++)
+            {
+                Settings.Buttons.Teams.Add(new Team
+                {
+                    Id = i,
+                    Name = $"Игрок {i}",
+                    Mac = $"VIRT:{i:00}",
+                    Score = 0
+                });
+            }
+
+            _log.Add(LogKind.Game, $"Состав команд: {Settings.Buttons.Teams.Count}");
+            TeamsChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>Нормализация MAC или генерация VIRT:NN.</summary>
+        private static string NormalizeMacOrVirtual(string mac, int id)
+        {
+            if (string.IsNullOrWhiteSpace(mac)) return $"VIRT:{id:00}";
+            return mac.Trim().ToUpperInvariant();
+        }
+
         private void OnCountdownFinished() => StartMusic();
 
         private void StartMusic()
@@ -271,6 +324,118 @@ namespace GuessMelody.Core
             RaiseState();
             _log.Add(LogKind.Game, "PANIC: раунд сброшен.");
         }
+
+        /// <summary>Добавить команду. Если MAC не задан — создаётся пустой слот VIRT:NN.</summary>
+        public Team AddTeam(string name = null, string mac = null)
+        {
+            if (Settings.Buttons == null) Settings.Buttons = new ButtonsMap();
+
+            int id = Settings.Buttons.NextId();
+            var team = new Team
+            {
+                Id = id,
+                Name = string.IsNullOrWhiteSpace(name) ? $"Игрок {id}" : name.Trim(),
+                Mac = NormalizeMacOrVirtual(mac, id),
+                Score = 0
+            };
+
+            Settings.Buttons.Teams.Add(team);
+            _log.Add(LogKind.Game, $"➕ Команда {team.Id}: {team.Name} ({team.Mac})");
+            TeamsChanged?.Invoke(this, EventArgs.Empty);
+            return team;
+        }
+
+        /// <summary>Удалить команду. Запрещено во время раунда.</summary>
+        public bool RemoveTeam(int id)
+        {
+            if (!CanEditTeams)
+            {
+                _log.Add(LogKind.Error, "Нельзя менять состав команд во время раунда.");
+                return false;
+            }
+
+            var team = Settings?.Buttons?.Teams?.FirstOrDefault(t => t.Id == id);
+            if (team == null) return false;
+
+            Settings.Buttons.Teams.Remove(team);
+            _log.Add(LogKind.Game, $"➖ Команда {team.Id}: {team.Name} ({team.Mac})");
+            TeamsChanged?.Invoke(this, EventArgs.Empty);
+            return true;
+        }
+
+        /// <summary>Переименовать команду.</summary>
+        public bool RenameTeam(int id, string newName)
+        {
+            var team = Settings?.Buttons?.Teams?.FirstOrDefault(t => t.Id == id);
+            if (team == null) return false;
+
+            var old = team.Name;
+            team.Name = string.IsNullOrWhiteSpace(newName) ? $"Игрок {id}" : newName.Trim();
+            if (old == team.Name) return true;
+
+            _log.Add(LogKind.Game, $"✎ Команда {id}: «{old}» → «{team.Name}»");
+            TeamsChanged?.Invoke(this, EventArgs.Empty);
+            return true;
+        }
+
+        /// <summary>
+        /// Присвоить MAC команде.
+        /// force = true — если MAC занят другой командой, отвязать её (сделать VIRT).
+        /// force = false — если MAC занят, вернуть false.
+        /// </summary>
+        public bool AssignMac(int id, string mac, bool force = false)
+        {
+            if (!CanEditTeams)
+            {
+                _log.Add(LogKind.Error, "Нельзя менять MAC во время раунда.");
+                return false;
+            }
+
+            var team = Settings?.Buttons?.Teams?.FirstOrDefault(t => t.Id == id);
+            if (team == null) return false;
+
+            // Пусто → VIRT:NN
+            if (string.IsNullOrWhiteSpace(mac))
+            {
+                team.Mac = $"VIRT:{team.Id:00}";
+                team.IsAlive = false;
+                _log.Add(LogKind.Game, $"↩ Команда {team.Id} «{team.Name}» → пустой слот.");
+                TeamsChanged?.Invoke(this, EventArgs.Empty);
+                return true;
+            }
+
+            mac = mac.Trim().ToUpperInvariant();
+
+            var existing = FindTeamByMacExcept(mac, id);
+            if (existing != null)
+            {
+                if (!force)
+                {
+                    _log.Add(LogKind.Error,
+                        $"MAC {mac} уже привязан к «{existing.Name}» (Id={existing.Id}).");
+                    return false;
+                }
+
+                // Отвязываем старую команду
+                existing.Mac = $"VIRT:{existing.Id:00}";
+                existing.IsAlive = false;
+                _log.Add(LogKind.Game,
+                    $"MAC {mac} отвязан от «{existing.Name}» (Id={existing.Id}).");
+            }
+
+            team.Mac = mac;
+            _log.Add(LogKind.Game, $"🔗 Команда {team.Id} «{team.Name}» → {mac}");
+            TeamsChanged?.Invoke(this, EventArgs.Empty);
+            return true;
+        }
+
+        /// <summary>Отвязать MAC (команда становится пустым слотом).</summary>
+        public bool ClearMac(int id)
+        {
+            return AssignMac(id, null, force: false);
+        }
+
+        public event EventHandler TeamsChanged;
 
         // -------------------------------------------------------------
         // Нажатие игрока
@@ -497,6 +662,10 @@ namespace GuessMelody.Core
         /// <summary>Зарегистрировать heartbeat команды по MAC. Обновляет LastHeartbeatUtc и IsAlive.</summary>
         public void OnHeartbeat(string mac)
         {
+            if (string.IsNullOrWhiteSpace(mac)) return;
+            // Сначала — всем желающим (для режима «захват MAC»)
+            MacSeen?.Invoke(this, mac);
+
             var team = Teams.FirstOrDefault(t =>
                 string.Equals(t.Mac, mac, StringComparison.OrdinalIgnoreCase));
             if (team == null) return;
@@ -581,6 +750,33 @@ namespace GuessMelody.Core
             
             _log.Add(LogKind.Game, "Новая игра — состояние сброшено.");
         }
+
+
+        // =============================================================
+        // Управление составом команд
+        // =============================================================
+
+        /// <summary>Можно ли менять состав команд (только вне раунда).</summary>
+        public bool CanEditTeams =>
+            State == RoundState.Idle || State == RoundState.Finished;
+
+        /// <summary>Найти команду по MAC.</summary>
+        public Team FindTeamByMac(string mac)
+        {
+            if (string.IsNullOrWhiteSpace(mac)) return null;
+            return Settings?.Buttons?.Teams?.FirstOrDefault(t =>
+                string.Equals(t.Mac, mac, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>Проверить, занят ли MAC другой командой (кроме excludeId).</summary>
+        public Team FindTeamByMacExcept(string mac, int excludeId)
+        {
+            if (string.IsNullOrWhiteSpace(mac)) return null;
+            return Settings?.Buttons?.Teams?.FirstOrDefault(t =>
+                t.Id != excludeId &&
+                string.Equals(t.Mac, mac, StringComparison.OrdinalIgnoreCase));
+        }
+
 
         // -------------------------------------------------------------
         // Выбор трека

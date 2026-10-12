@@ -43,6 +43,12 @@ namespace GuessMelody.Core.Models
         [Newtonsoft.Json.JsonIgnore]
         public long HeartbeatCount { get; set; }
 
+        [Newtonsoft.Json.JsonIgnore]
+        public bool IsVirtual => Mac != null && Mac.StartsWith("VIRT:", StringComparison.OrdinalIgnoreCase);
+
+        [Newtonsoft.Json.JsonIgnore]
+        public bool IsAssigned => !string.IsNullOrWhiteSpace(Mac) && !IsVirtual;
+
         /// <summary>Сколько секунд назад был последний HB. Если ни разу — большое число.</summary>
         public double SecondsSinceHeartbeat =>
             LastHeartbeatUtc == DateTime.MinValue
@@ -154,6 +160,13 @@ namespace GuessMelody.Core.Models
     public class ButtonsMap
     {
         public List<Team> Teams { get; set; } = new List<Team>();
+
+        /// <summary>Следующий свободный ID (для авто-нумерации).</summary>
+        public int NextId()
+        {
+            if (Teams == null || Teams.Count == 0) return 1;
+            return Teams.Max(t => t.Id) + 1;
+        }
     }
 
 

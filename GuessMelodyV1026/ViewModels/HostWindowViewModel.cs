@@ -27,6 +27,7 @@ namespace GuessMelody.ViewModels
             _engine.TrackChanged += (s, e) => RefreshAll();
             _engine.RemainingChanged += (s, e) => RebuildCategories();
             _engine.CategoryHighlighted += (s, cat) => MarkActiveCategory(cat);
+            _engine.TeamsChanged += (s, e) => RefreshTeams();
 
             StartRoundCommand = new RelayCommand(_ => StartNextRound());
             NextRoundCommand = new RelayCommand(_ => { _engine.NextRound(); RebuildCategories(); });

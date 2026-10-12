@@ -37,6 +37,43 @@ namespace GuessMelody.Views
             };
         }
 
+        /// <summary>
+        /// Открыть окно игроков. Если уже открыто — активировать.
+        /// Создаёт VM через DI, если окно нужно открыть впервые.
+        /// </summary>
+        public static void ShowOrActivate()
+        {
+            // Уже открыто — просто на передний план
+            if (Current != null && Current.IsLoaded)
+            {
+                if (Current.WindowState == WindowState.Minimized)
+                    Current.WindowState = WindowState.Normal;
+
+                Current.Activate();
+                Current.Topmost = true;
+                Current.Topmost = false;   // кратко — на верх, потом отпускаем
+                Current.Focus();
+                return;
+            }
+
+            // Создаём новое окно с VM из DI
+            var vm = App.Services.GetService(typeof(PlayerWindowViewModel)) as PlayerWindowViewModel;
+            if (vm == null)
+            {
+                MessageBox.Show("Не удалось создать модель окна игроков.",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            var win = new PlayerWindow
+            {
+                DataContext = vm,
+                Owner = Application.Current?.MainWindow
+            };
+            Current = win;
+            win.Show();
+        }
+    
         private void TeamTile_LeftClick(object sender, MouseButtonEventArgs e)
         {
             if (!(sender is FrameworkElement fe)) return;

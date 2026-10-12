@@ -30,18 +30,21 @@ namespace GuessMelody.Views.Tabs
 
         private void OnOpenPlayer(object sender, EventArgs e)
         {
-            var vm = App.Services.GetRequiredService<PlayerWindowViewModel>();
-            var win = new PlayerWindow { DataContext = vm };
-            win.Owner = Window.GetWindow(this);
-            win.Show();
+            //var vm = App.Services.GetRequiredService<PlayerWindowViewModel>();
+            //var win = new PlayerWindow { DataContext = vm };
+            //win.Owner = Window.GetWindow(this);
+            //win.Show();
+
+            PlayerWindow.ShowOrActivate();
         }
 
         private void OnOpenHost(object sender, EventArgs e)
         {
-            var vm = App.Services.GetRequiredService<HostWindowViewModel>();
-            var win = new HostWindow { DataContext = vm };
-            win.Owner = Window.GetWindow(this);
-            win.Show();
+            //var vm = App.Services.GetRequiredService<HostWindowViewModel>();
+            //var win = new HostWindow { DataContext = vm };
+            //win.Owner = Window.GetWindow(this);
+            //win.Show();
+            HostWindow.ShowOrActivate();
         }
     }
 }

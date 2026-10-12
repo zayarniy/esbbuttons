@@ -71,5 +71,36 @@ namespace GuessMelody.Views
                 return;
             }
         }
+
+        public static void ShowOrActivate()
+        {
+            if (Current != null && Current.IsLoaded)
+            {
+                if (Current.WindowState == WindowState.Minimized)
+                    Current.WindowState = WindowState.Normal;
+
+                Current.Activate();
+                Current.Topmost = true;
+                Current.Topmost = false;
+                Current.Focus();
+                return;
+            }
+
+            var vm = App.Services.GetService(typeof(HostWindowViewModel)) as HostWindowViewModel;
+            if (vm == null)
+            {
+                MessageBox.Show("Не удалось создать модель окна ведущего.",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            var win = new HostWindow
+            {
+                DataContext = vm,
+                Owner = Application.Current?.MainWindow
+            };
+            Current = win;
+            win.Show();
+        }
     }
 }

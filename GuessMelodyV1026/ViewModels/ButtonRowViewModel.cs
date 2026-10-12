@@ -5,24 +5,20 @@ namespace GuessMelody.ViewModels
 {
     public class ButtonRowViewModel : ViewModelBase
     {
-
-        private string _hbSecondsAgo = "—";
-        public string HbSecondsAgo
-        {
-            get => _hbSecondsAgo;
-            private set => Set(ref _hbSecondsAgo, value);
-        }
-
-        private DateTime _lastHbUtc;
-
-
-        public string Mac { get; }
+        public int Id { get; }
 
         private string _name = "";
         public string Name
         {
             get => _name;
             set => Set(ref _name, value);
+        }
+
+        private string _mac = "";
+        public string Mac
+        {
+            get => _mac;
+            set => Set(ref _mac, value);
         }
 
         private bool _isSelected;
@@ -39,11 +35,15 @@ namespace GuessMelody.ViewModels
             private set => Set(ref _lastIp, value);
         }
 
-        private bool _alive = true;
+        private bool _alive;
         public bool Alive
         {
             get => _alive;
-            private set => Set(ref _alive, value);
+            private set
+            {
+                if (Set(ref _alive, value))
+                    OnPropertyChanged(nameof(IsAliveText));
+            }
         }
 
         private int _pressCount;
@@ -67,7 +67,7 @@ namespace GuessMelody.ViewModels
             private set => Set(ref _lastUptimeMs, value);
         }
 
-        private string _deliveryText = "100%";
+        private string _deliveryText = "—";
         public string DeliveryText
         {
             get => _deliveryText;
@@ -88,37 +88,47 @@ namespace GuessMelody.ViewModels
             private set => Set(ref _rebooting, value);
         }
 
-        private string _firstSeenLocal = "";
+        private string _firstSeenLocal = "—";
         public string FirstSeenLocal
         {
             get => _firstSeenLocal;
             private set => Set(ref _firstSeenLocal, value);
         }
 
-        private string _lastSeenLocal = "";
+        private string _lastSeenLocal = "—";
         public string LastSeenLocal
         {
             get => _lastSeenLocal;
             private set => Set(ref _lastSeenLocal, value);
         }
 
-        private string _secondsSinceLastSeen = "0.0";
+        private string _secondsSinceLastSeen = "—";
         public string SecondsSinceLastSeen
         {
             get => _secondsSinceLastSeen;
             private set => Set(ref _secondsSinceLastSeen, value);
         }
 
-        private DateTime _lastSeenUtc;
+        // «Пустой слот» — MAC = VIRT:NN или пусто. Захват/подключение возможно.
+        public bool IsVirtual =>
+            string.IsNullOrWhiteSpace(Mac) ||
+            Mac.StartsWith("VIRT:", StringComparison.OrdinalIgnoreCase);
 
-        public ButtonRowViewModel(string mac, string name = "")
+        public string IsAliveText => Alive ? "● жив" : "○ нет";
+
+        private DateTime _lastSeenUtc;
+        private bool _hasHb;
+
+        public ButtonRowViewModel(int id, string name, string mac)
         {
-            Mac = mac;
+            Id = id;
             _name = name;
+            _mac = mac;
             _lastSeenUtc = DateTime.UtcNow;
         }
 
-        public void Update(ButtonInfo info)
+        /// <summary>Данные от UDP-хаба (IP, жив, нажатий, HB).</summary>
+        public void UpdateHub(ButtonInfo info)
         {
             if (info == null) return;
 
@@ -128,32 +138,21 @@ namespace GuessMelody.ViewModels
             LastSeq = info.LastSeq ?? "";
             LastUptimeMs = info.LastUptimeMs;
             DeliveryPercent = info.DeliveryPercent;
-            DeliveryText = $"{info.DeliveryPercent:F1}%  ({info.ReceivedHbCount}/{info.ExpectedHbCount})";
+            DeliveryText = $"{info.DeliveryPercent:F0}%  ({info.ReceivedHbCount}/{info.ExpectedHbCount})";
             Rebooting = info.Rebooting;
             FirstSeenLocal = info.FirstSeenUtc.ToLocalTime().ToString("HH:mm:ss");
             LastSeenLocal = info.LastSeenUtc.ToLocalTime().ToString("HH:mm:ss");
             _lastSeenUtc = info.LastSeenUtc;
-            _lastHbUtc = info.LastSeenUtc;   // последний HB = последний приход пакета от кнопки
+            _hasHb = true;
             RefreshTime();
-            RefreshHbSecondsAgo();
         }
 
-        public void RefreshTime() =>
-            SecondsSinceLastSeen = (DateTime.UtcNow - _lastSeenUtc).TotalSeconds.ToString("F1");
-
-        /// <summary>Сколько секунд назад приходил heartbeat.</summary>
-        public void RefreshHbSecondsAgo()
+        public void RefreshTime()
         {
-            // Если HB ни разу не было — показываем прочерк
-            if (_lastHbUtc == default(DateTime))
-            {
-                HbSecondsAgo = "—";
-                return;
-            }
-
-            var sec = (DateTime.UtcNow - _lastHbUtc).TotalSeconds;
-            HbSecondsAgo = sec < 0 ? "0.0" : sec.ToString("F1");
+            SecondsSinceLastSeen = _hasHb
+                ? (DateTime.UtcNow - _lastSeenUtc).TotalSeconds.ToString("F1")
+                : "—";
+            OnPropertyChanged(nameof(IsVirtual));
         }
-
     }
 }

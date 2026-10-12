@@ -386,7 +386,7 @@ namespace GuessMelody.ViewModels
                     Mac = t.Mac
                 });
             }
-            Buttons.ApplyExternalBindings(cfg);
+           
         }
 
         /// <summary>Перенести текущие привязки из ButtonsTab в GameSettings.</summary>

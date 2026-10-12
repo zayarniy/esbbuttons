@@ -22,7 +22,7 @@ namespace GuessMelody
             services.AddSingleton<AudioCoordinator>();
 
             services.AddSingleton<ButtonService>(sp =>
-                new ButtonService(sp.GetRequiredService<LogService>()));
+                new ButtonService(sp.GetRequiredService<LogService>(), sp.GetRequiredService<GameEngine>()));
 
             services.AddSingleton<AudioEngine>();
             services.AddSingleton<PreviewEngine>();

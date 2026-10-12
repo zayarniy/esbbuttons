@@ -26,19 +26,19 @@ namespace GuessMelody.Services
             _engine = engine ?? throw new ArgumentNullException(nameof(engine));
             _log = log;
 
-            _buttons.Heartbeat += OnHeartbeat;
-            _buttons.Press += OnPress;
-
+            // OnHeartbeat теперь вызывает ButtonService — здесь только таймер потери HB
             _tickTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _tickTimer.Tick += (s, e) =>
             {
-                var t = _engine?.Settings?.Timings?.HeartbeatTimeoutSec ?? 12;
-                if (t <= 0) t = 12;
+                var t = _engine?.Settings?.Timings?.HeartbeatTimeoutSec ?? 11;
+                if (t <= 0) t = 11;
                 TimeoutSec = t;
                 _engine.TickHeartbeats(TimeoutSec);
             };
             _tickTimer.Start();
         }
+
+
 
         private void OnPress(object sender, PressEventArgs e)
         {

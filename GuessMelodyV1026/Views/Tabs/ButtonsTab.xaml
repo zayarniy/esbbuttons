@@ -21,74 +21,108 @@
                 <Button Content="■ Остановить" Command="{Binding StopCommand}"
                         Margin="4,0,16,0" Padding="10,4"/>
 
-                <TextBlock Text="Локальные IP:" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                <TextBlock Text="{Binding LocalIpsText}" Foreground="#555" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding AliveSummary}" VerticalAlignment="Center" FontWeight="Bold"
+                           Foreground="DarkGreen" Margin="0,0,16,0"/>
+                <TextBlock Text="{Binding LocalIpsText}" VerticalAlignment="Center" Foreground="#555"/>
             </StackPanel>
         </Border>
 
-        <!-- Панель 2: команды и привязки -->
+        <!-- Панель 2: действия с командами -->
         <Border DockPanel.Dock="Top" Padding="6" Background="#FAFAFA"
                 BorderBrush="#CCC" BorderThickness="0,0,0,1">
-            <StackPanel Orientation="Horizontal">
-                <Button Content="⤓ Загрузить привязки" Command="{Binding LoadCommand}" Padding="8,3" Margin="0,0,4,0"/>
-                <Button Content="⤒ Сохранить привязки" Command="{Binding SaveCommand}" Padding="8,3" Margin="0,0,16,0"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-                <Button Content="Отметить все"  Command="{Binding SelectAllCommand}"   Padding="8,3" Margin="0,0,4,0"/>
-                <Button Content="Снять все"     Command="{Binding DeselectAllCommand}" Padding="8,3" Margin="0,0,4,0"/>
-                <Button Content="Только живые"  Command="{Binding SelectAliveCommand}" Padding="8,3" Margin="0,0,16,0"/>
+                <WrapPanel Grid.Column="0">
+                    <Button Content="➕ Добавить" Command="{Binding AddTeamCommand}"
+                            Padding="8,3" Margin="0,0,4,0"/>
+                    <Button Content="➖ Удалить выбранные" Command="{Binding RemoveTeamCommand}"
+                            Padding="8,3" Margin="0,0,4,0"/>
+                    <Button Content="🎯 Захватить MAC" Command="{Binding CaptureMacCommand}"
+                            Padding="8,3" Margin="0,0,4,0"
+                            Background="#FFF3C4"/>
+                    <Button Content="✖ Отменить захват" Command="{Binding CancelCaptureCommand}"
+                            Padding="8,3" Margin="0,0,12,0"/>
+                    <Button Content="✔ Применить имена/MAC" Command="{Binding RenameTeamCommand}"
+                            Padding="8,3" Margin="0,0,12,0"
+                            Background="#C8E6C9"/>
+                    <Button Content="↩ Отвязать MAC" Command="{Binding ClearMacCommand}"
+                            Padding="8,3" Margin="0,0,12,0"/>
+                    <Button Content="🔓 Разблокировать" Command="{Binding UnblockCommand}"
+                            Padding="8,3" Margin="0,0,12,0"/>
+                </WrapPanel>
 
-                <Button Content="SETSRV → выбранным/всем" Command="{Binding SendSetServerCommand}" Padding="8,3" Margin="0,0,4,0"/>
-                <Button Content="GETCFG"                  Command="{Binding SendGetCfgCommand}"    Padding="8,3" Margin="0,0,16,0"/>
-                <Button Content="Применить имена"         Command="{Binding ApplyNamesCommand}"    Padding="8,3"/>
-            </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="☑ Все" Command="{Binding SelectAllCommand}" Padding="8,3" Margin="0,0,4,0"/>
+                    <Button Content="☐ Никого" Command="{Binding DeselectAllCommand}" Padding="8,3" Margin="0,0,4,0"/>
+                    <Button Content="◉ Живых" Command="{Binding SelectAliveCommand}" Padding="8,3"/>
+                </StackPanel>
+            </Grid>
         </Border>
 
-        <!-- Эмуляция -->
+        <!-- Панель 3: эмуляция -->
         <Border DockPanel.Dock="Top" Padding="6" Background="#FFF8E1"
                 BorderBrush="#E0C97F" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Эмуляция:" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <ItemsControl ItemsSource="{Binding Rows}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Content="{Binding Name}"
-                                    Padding="8,3" Margin="0,0,4,0"
-                                    Command="{Binding DataContext.EmulatePressCommand,
-                                              RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                    CommandParameter="{Binding Mac}"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <Button Content="💓 HB выбранным" Command="{Binding EmulateHbCommand}"
+                        Padding="8,3" Margin="0,0,4,0"/>
+                <Button Content="🔄 REBOOT выбранным" Command="{Binding RebootSelectedCommand}"
+                        Padding="8,3" Margin="0,0,16,0"/>
+                <CheckBox Content="Автосоздавать команды при HB неизвестных MAC"
+                          IsChecked="{Binding AutoCreateUnknown}"
+                          VerticalAlignment="Center" Margin="0,0,16,0"/>
+                <TextBlock Text="{Binding CaptureStatusText}" VerticalAlignment="Center"
+                           FontWeight="Bold" Foreground="#B8860B"/>
             </StackPanel>
         </Border>
 
-        <!-- Таблица -->
+        <!-- Таблица команд -->
         <DataGrid ItemsSource="{Binding Rows}"
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
                   HeadersVisibility="Column"
                   GridLinesVisibility="Horizontal"
                   AlternatingRowBackground="#FAFAFA">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Alive}" Value="False">
+                            <Setter Property="Foreground" Value="#999"/>
+                            <Setter Property="Background" Value="#FFF3E0"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+
             <DataGrid.Columns>
                 <DataGridCheckBoxColumn Header="✓" Width="30"
-                            Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"/>
-                <DataGridTextColumn Header="Имя"        Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
-                <DataGridTextColumn Header="MAC"        Binding="{Binding Mac}"             Width="160" IsReadOnly="True"/>
-                <DataGridTextColumn Header="IP"         Binding="{Binding LastIp}"          Width="130" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Сост."      Binding="{Binding Alive, Converter={StaticResource AliveConverter}}"
-                        Width="70" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Нажатий"    Binding="{Binding PressCount}"      Width="70"  IsReadOnly="True"/>
-                <DataGridTextColumn Header="Доставка HB" Binding="{Binding DeliveryText}"   Width="150" IsReadOnly="True"/>
-                <DataGridTextColumn Header="HB, с назад" Binding="{Binding HbSecondsAgo}"   Width="90"  IsReadOnly="True"/>
-                <DataGridTextColumn Header="Посл. seq"  Binding="{Binding LastSeq}"         Width="80"  IsReadOnly="True"/>
-                <DataGridTextColumn Header="Первый раз" Binding="{Binding FirstSeenLocal}"  Width="90"  IsReadOnly="True"/>
+                                        Binding="{Binding IsSelected}"/>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="40" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Имя" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="160"/>
+                <DataGridTextColumn Header="MAC" Binding="{Binding Mac, UpdateSourceTrigger=LostFocus}" Width="160"/>
+                <DataGridTextColumn Header="IP" Binding="{Binding LastIp}" Width="130" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Сост." Binding="{Binding IsAliveText}" Width="70" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Нажатий" Binding="{Binding PressCount}" Width="70" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Доставка HB" Binding="{Binding DeliveryText}" Width="130" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Посл. seq" Binding="{Binding LastSeq}" Width="80" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Первый раз" Binding="{Binding FirstSeenLocal}" Width="90" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Последний раз" Binding="{Binding LastSeenLocal}" Width="100" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Тишина, с"  Binding="{Binding SecondsSinceLastSeen}" Width="80" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Тишина, с" Binding="{Binding SecondsSinceLastSeen}" Width="80" IsReadOnly="True"/>
+                <DataGridTemplateColumn Header="" Width="90">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="🎯 Захват"
+                                    Command="{Binding DataContext.CaptureMacCommand,
+                                              RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding Id}"
+                                    Padding="4,2"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>

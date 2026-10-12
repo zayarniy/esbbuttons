@@ -28,7 +28,7 @@ public class ButtonService : IDisposable
     /// <summary>Каждый heartbeat от кнопки. Нужен для пульсации индикатора.</summary>
     public event EventHandler<ButtonEventArgs> Heartbeat;
 
-    public ButtonService(LogService log,
+    public ButtonService(LogService log, GameEngine engine,
                          int listenPort = 41234,
                          int ackPort = 41235,
                          int cmdPort = 41234)
