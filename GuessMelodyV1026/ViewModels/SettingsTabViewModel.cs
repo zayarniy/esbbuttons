@@ -18,6 +18,12 @@ namespace GuessMelody.ViewModels
         private readonly DialogService _dlg;
         private readonly ColorPickerService _color;
         private readonly SettingsPresetService _presets;
+        private int _afterCorrectPlay = 5;
+        public int AfterCorrectPlaySec
+        {
+            get => _afterCorrectPlay;
+            set => Set(ref _afterCorrectPlay, value);
+        }
 
         public SettingsTabViewModel(
             GameEngine engine,
@@ -319,6 +325,7 @@ namespace GuessMelody.ViewModels
             PauseBetweenRoundsSec = t.PauseBetweenRoundsSec;
             AutoNextRound = t.AutoNextRound;
             HeartbeatTimeoutSec = t.HeartbeatTimeoutSec;
+            AfterCorrectPlaySec = t.AfterCorrectPlaySec;
 
             PlayerBgColor = ap.PlayerBgColor;
             PlayerAccentColor = ap.PlayerAccentColor;
@@ -366,6 +373,7 @@ namespace GuessMelody.ViewModels
             t.PauseBetweenRoundsSec = PauseBetweenRoundsSec;
             t.AutoNextRound = AutoNextRound;
             t.HeartbeatTimeoutSec = HeartbeatTimeoutSec;
+            t.AfterCorrectPlaySec = AfterCorrectPlaySec;
 
             ap.PlayerBgColor = PlayerBgColor;
             ap.PlayerAccentColor = PlayerAccentColor;

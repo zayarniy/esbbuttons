@@ -22,7 +22,8 @@ namespace GuessMelody.Core
         private readonly RoundTimer _countdownTimer;
         private readonly RoundTimer _answerTimer;
         private readonly Random _rng = new Random();
-        
+        private readonly RoundTimer _afterCorrectTimer;
+
 
         private readonly List<PressEvent> _pressQueue = new List<PressEvent>();
         private readonly HashSet<string> _blockedThisRound =
@@ -100,6 +101,8 @@ namespace GuessMelody.Core
                 StateChanged?.Invoke(this, EventArgs.Empty);
             };
             _answerTimer.Timeout += (s, e) => OnAnswerTimeout();
+            _afterCorrectTimer = new RoundTimer();
+            _afterCorrectTimer.Timeout += (s, e) => OnAfterCorrectTimeout();
         }
 
         public void ApplySettings(GameSettings settings)
@@ -148,6 +151,7 @@ namespace GuessMelody.Core
         public void StartRound(int categoryIndex)
         {
             // --- Жёсткий стоп всей музыки от предыдущего раунда ---
+            _afterCorrectTimer.Stop();
             RequestStopTrack?.Invoke(this, EventArgs.Empty);
             _countdownTimer.Stop();
             _answerTimer.Stop();
@@ -262,8 +266,16 @@ namespace GuessMelody.Core
             RequestPlayTrack?.Invoke(this, CurrentTrack);
         }
 
+        private void OnAfterCorrectTimeout()
+        {
+            _log.Add(LogKind.Audio, "⏹ Проигрыш после правильного ответа завершён.");
+            RequestStopTrack?.Invoke(this, EventArgs.Empty);
+            RaiseState();
+        }
+
         public void NextRound()
         {
+            _afterCorrectTimer.Stop();
             if (TotalRounds > 0 && CurrentRound + 1 >= TotalRounds)
             {
                 RequestStopTrack?.Invoke(this, EventArgs.Empty);
@@ -275,6 +287,7 @@ namespace GuessMelody.Core
             RequestStopTrack?.Invoke(this, EventArgs.Empty);
             CurrentRound++;
             State = RoundState.Idle;
+
             RaiseState();
         }
 
@@ -282,6 +295,7 @@ namespace GuessMelody.Core
         {
             _answerTimer.Stop();
             _countdownTimer.Stop();
+            _afterCorrectTimer.Stop();
             RequestStopTrack?.Invoke(this, EventArgs.Empty);
             State = RoundState.Idle;
             RaiseState();
@@ -321,6 +335,7 @@ namespace GuessMelody.Core
             RequestStopTrack?.Invoke(this, EventArgs.Empty);
             State = RoundState.Idle;
             FirstPressedTeam = null;
+            _afterCorrectTimer.Stop();
             RaiseState();
             _log.Add(LogKind.Game, "PANIC: раунд сброшен.");
         }
@@ -560,13 +575,31 @@ namespace GuessMelody.Core
                 _log.Add(LogKind.Score,
                     $"✅ {FirstPressedTeam.Name} +{add} → {FirstPressedTeam.Score}");
 
-                RequestStopTrack?.Invoke(this, EventArgs.Empty);
                 _answerTimer.Stop();
-                State = RoundState.Scored;
-                RaiseState();
+
+                // Снимаем музыку с паузы — пусть играет ещё N секунд
+                int afterSec = Settings?.Timings?.AfterCorrectPlaySec ?? 5;
+                if (afterSec > 0)
+                {
+                    RequestResumeTrack?.Invoke(this, EventArgs.Empty);
+                    State = RoundState.Scored;     // фиксируем «правильный ответ дан»
+                    RaiseState();
+
+                    _afterCorrectTimer.Stop();
+                    _afterCorrectTimer.Start(afterSec);
+                    _log.Add(LogKind.Audio,
+                        $"▶ Музыка продолжит играть ещё {afterSec} с");
+                }
+                else
+                {
+                    RequestStopTrack?.Invoke(this, EventArgs.Empty);
+                    State = RoundState.Scored;
+                    RaiseState();
+                }
+
                 ScoreChanged?.Invoke(this, EventArgs.Empty);
 
-                // Событие для показа правильного ответа
+                // Показать правильный ответ (звук «Правильный» + окно) — сразу
                 CorrectAnswerRequested?.Invoke(this, CurrentTrack?.RelativePath ?? "");
                 return;
             }
@@ -578,22 +611,13 @@ namespace GuessMelody.Core
             FirstPressedTeam = null;
             _answerTimer.Stop();
 
-            // Событие для показа «Неверный ответ» + паузы
+            // Всегда ставим музыку на паузу — звук «Неверный» звучит отдельно
+            RequestPauseTrack?.Invoke(this, EventArgs.Empty);
+
             WrongAnswerRequested?.Invoke(this, wrongTeamName);
 
-            if (Settings?.Rules?.AllowRePressAfterWrong == true)
-            {
-                // Пауза сделана сервисом; музыка будет возобновлена по его сигналу
-                // (см. FeedbackService.WrongPauseFinished → ResumeMusic)
-                State = RoundState.Wrong;
-                RaiseState();
-            }
-            else
-            {
-                RequestPauseTrack?.Invoke(this, EventArgs.Empty);
-                State = RoundState.Wrong;
-                RaiseState();
-            }
+            State = RoundState.Wrong;
+            RaiseState();
         }
 
         // -------------------------------------------------------------
@@ -720,7 +744,7 @@ namespace GuessMelody.Core
             RequestStopTrack?.Invoke(this, EventArgs.Empty);
             _countdownTimer.Stop();
             _answerTimer.Stop();
-
+            _afterCorrectTimer.Stop();
             foreach (var t in Teams)
             {
                 t.Score = 0;
@@ -838,6 +862,7 @@ namespace GuessMelody.Core
         {
             _countdownTimer?.Dispose();
             _answerTimer?.Dispose();
+            _afterCorrectTimer?.Dispose();
         }
     }
 }

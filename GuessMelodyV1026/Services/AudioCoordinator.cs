@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows.Threading;
 using GuessMelody.Audio;
 using GuessMelody.Core;
+using GuessMelody.Core.Enums;
 using GuessMelody.Core.Models;
 
 namespace GuessMelody.Services
@@ -20,10 +21,11 @@ namespace GuessMelody.Services
         private double _pauseStartedSec;
         private bool _isPaused;
         private string _lastFile;
-        private double _lastPositionSec;
+        private double _lastPositionSec;// где остановились (в секундах от начала трека)
         private int _lastVolume = 80;
         private bool _lastLoop;
 
+        private double _endSec;            // абсолютная точка конца фрагмента (startSec + durationSec)
         public string RootFolder { get; set; } = "";
 
         public AudioCoordinator(GameEngine engine, AudioEngine audio, BuzzerPlayer buzzer, LogService log)
@@ -52,10 +54,9 @@ namespace GuessMelody.Services
 
                 if (!File.Exists(path))
                 {
-                    _log.Add(Core.Enums.LogKind.Error, $"Файл не найден: {path}");
+                    _log.Add(LogKind.Error, $"Файл не найден: {path}");
                     return;
                 }
-
 
                 var s = _engine.Settings;
                 var ov = track.Overrides;
@@ -63,7 +64,6 @@ namespace GuessMelody.Services
                 double startSec = ov?.StartSec ?? s.Rules.DefaultStartSec;
                 if ((ov?.RandomStart ?? s.Rules.RandomStart) && track.DurationSec > 0)
                 {
-                    // старт со случайного места, но не ближе к концу, чем длительность фрагмента
                     double frag = ov?.DurationSec ?? s.Rules.FragmentSec;
                     double max = Math.Max(0, track.DurationSec - frag);
                     startSec = max > 0 ? new Random().NextDouble() * max : 0;
@@ -74,19 +74,21 @@ namespace GuessMelody.Services
                 bool loop = ov?.Loop ?? false;
 
                 _audio.Play(path, startSec, durationSec, volume, loop);
-                _duration = durationSec;
-                _startUtc = DateTime.UtcNow;
+
                 _lastFile = path;
                 _lastVolume = volume;
                 _lastLoop = loop;
-                _lastPositionSec = startSec;
+                _endSec = startSec + durationSec;    // абсолютный конец фрагмента
+                _startUtc = DateTime.UtcNow.AddSeconds(-startSec);
                 _playbackTimer.Start();
-                _log.Add(Core.Enums.LogKind.Audio, $"▶ {Path.GetFileName(path)} " +
-                    $"[start={startSec:F1}s, dur={durationSec}s, vol={volume}%]");
+                _isPaused = false;
+
+                _log.Add(LogKind.Audio,
+                    $"▶ {Path.GetFileName(path)} [start={startSec:F1}, end={_endSec:F1}]");
             }
             catch (Exception ex)
             {
-                _log.Add(Core.Enums.LogKind.Error, "Audio play error: " + ex.Message);
+                _log.Add(LogKind.Error, "Audio play error: " + ex.Message);
             }
         }
 
@@ -95,74 +97,76 @@ namespace GuessMelody.Services
             _audio.Stop();
             _playbackTimer.Stop();
             _isPaused = false;
+            _pauseStartedSec = 0;
             _lastFile = null;
             _lastPositionSec = 0;
-            _log.Add(Core.Enums.LogKind.Audio, "⏹ Стоп");
+            _endSec = 0;
+            _log.Add(LogKind.Audio, "⏹ Стоп");
         }
 
         private void OnPause(object sender, EventArgs e)
         {
             _audio.Pause();
-
             if (_audio.IsPaused)
             {
                 _playbackTimer.Stop();
                 _pauseStartedSec = (DateTime.UtcNow - _startUtc).TotalSeconds;
+                _lastPositionSec = _pauseStartedSec;
                 _isPaused = true;
-                _log.Add(Core.Enums.LogKind.Audio, "⏸ Пауза");
-            }
-            else
-            {
-                // Не смогли поставить на паузу (уже остановлено/нет файла) — тихо игнор
-                _log.Add(Core.Enums.LogKind.Audio, "⏸ Пауза (нечего ставить)");
+                _log.Add(LogKind.Audio, $"⏸ Пауза на {_pauseStartedSec:F1} с");
             }
         }
 
         private void OnResume(object sender, EventArgs e)
         {
-            // Первый случай — пауза была, продолжаем с той же позиции
+            // Случай 1: была пауза — продолжаем с той же позиции
             if (_isPaused)
             {
                 _audio.Resume();
 
-                if (!_audio.IsPaused)   // успешно возобновили
+                if (!_audio.IsPaused)
                 {
                     _startUtc = DateTime.UtcNow.AddSeconds(-_pauseStartedSec);
                     _playbackTimer.Start();
                     _isPaused = false;
-                    _log.Add(Core.Enums.LogKind.Audio, "▶ Продолжение");
+                    _log.Add(LogKind.Audio, $"▶ Продолжение с {_pauseStartedSec:F1} с");
                 }
                 else
                 {
-                    _log.Add(Core.Enums.LogKind.Error, "▶ Не удалось продолжить воспроизведение");
+                    _log.Add(LogKind.Error, "▶ Не удалось продолжить воспроизведение");
                 }
                 return;
             }
 
-            // Второй случай — файл был остановлен полностью (после Stop).
-            // Восстанавливаем воспроизведение с последней известной позиции.
-            if (!string.IsNullOrEmpty(_lastFile))
+            // Случай 2: файл был полностью остановлен — восстанавливаем
+            if (string.IsNullOrEmpty(_lastFile))
             {
-                try
-                {
-                    var resumeFromSec = _lastPositionSec;
-                    if (resumeFromSec < 0) resumeFromSec = 0;
+                _log.Add(LogKind.Audio, "▶ Продолжить: нет активного трека");
+                return;
+            }
 
-                    // Сколько осталось играть — вычисляем из сохранённой длительности
-                    var remaining = _duration - resumeFromSec;
-                    if (remaining <= 0) remaining = _duration;
+            var resumeFromSec = _lastPositionSec;
+            if (resumeFromSec < 0) resumeFromSec = 0;
 
-                    _audio.Play(_lastFile, resumeFromSec, remaining, _lastVolume, _lastLoop);
-                    _duration = remaining;
-                    _startUtc = DateTime.UtcNow;
-                    _playbackTimer.Start();
-                    _log.Add(Core.Enums.LogKind.Audio,
-                        $"▶ Восстановлено воспроизведение с {resumeFromSec:F1} с");
-                }
-                catch (Exception ex)
-                {
-                    _log.Add(Core.Enums.LogKind.Error, "Resume error: " + ex.Message);
-                }
+            var remaining = _endSec - resumeFromSec;
+            if (remaining <= 0)
+            {
+                _log.Add(LogKind.Audio, "▶ Нечего продолжать — фрагмент уже закончился");
+                return;
+            }
+
+            try
+            {
+                _audio.Play(_lastFile, resumeFromSec, remaining, _lastVolume, _lastLoop);
+                _startUtc = DateTime.UtcNow.AddSeconds(-resumeFromSec);
+                _playbackTimer.Start();
+                _isPaused = false;
+                _log.Add(LogKind.Audio,
+                    $"▶ Восстановлено с {resumeFromSec:F1} с (осталось {remaining:F1} с)");
+            }
+            catch (Exception ex)
+            {
+                _log.Add(LogKind.Error, "Resume error: " + ex.Message);
             }
         }
         private void OnPlaybackTick(object sender, EventArgs e)
@@ -170,19 +174,18 @@ namespace GuessMelody.Services
             if (!_audio.IsPlaying && !_audio.IsPaused) { _playbackTimer.Stop(); return; }
 
             var elapsed = (DateTime.UtcNow - _startUtc).TotalSeconds;
-            var left = Math.Max(0, _duration - elapsed);
+            var left = Math.Max(0, _endSec - elapsed);
             _engine.TickPlayback(left);
 
-            _lastPositionSec = elapsed;   // ← запомнили текущую позицию
+            _lastPositionSec = elapsed;
 
             if (left <= 0)
             {
                 _playbackTimer.Stop();
                 _audio.Stop();
-                _log.Add(Core.Enums.LogKind.Audio, "⏱ Фрагмент закончился");
+                _log.Add(LogKind.Audio, "⏱ Фрагмент закончился");
             }
         }
-
         public void PlayBuzzer()
         {
             var path = _engine?.Settings?.Audio?.BuzzerPath;

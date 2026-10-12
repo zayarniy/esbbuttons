@@ -120,6 +120,7 @@ namespace GuessMelody.Core.Models
         public int PauseBetweenRoundsSec { get; set; } = 3;
         public bool AutoNextRound { get; set; } = false;
 
+        public int AfterCorrectPlaySec { get; set; } = 5;
         public int HeartbeatTimeoutSec { get; set; } = 11;
         
 
