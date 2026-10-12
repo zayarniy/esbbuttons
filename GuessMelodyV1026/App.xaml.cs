@@ -68,6 +68,7 @@ namespace GuessMelody
             Services.GetRequiredService<GuessMelody.Services.HeartbeatBridge>();
             Services.GetRequiredService<GuessMelody.Services.PressBridge>();
             Services.GetRequiredService<GuessMelody.Services.AnswerWindowService>();
+            Services.GetRequiredService<GuessMelody.Buttons.ButtonService>();
         }
 
         protected override void OnExit(ExitEventArgs e)
