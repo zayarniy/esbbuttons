@@ -27,9 +27,13 @@ namespace GuessMelody.Views
             InitializeComponent();
 
             Current = this;
-            Closed += (s, e) => { if (Current == this) Current = null; };
+            //Closed += (s, e) => { if (Current == this) Current = null; };
 
-
+            Closed += (s, e) =>
+            {
+                if (ReferenceEquals(Current, this)) Current = null;
+                (DataContext as IDisposable)?.Dispose();
+            };
             DataContextChanged += (s, e) =>
             {
                 if (DataContext is PlayerWindowViewModel vm)

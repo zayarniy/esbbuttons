@@ -130,6 +130,18 @@ namespace GuessMelody.ViewModels
         private readonly DispatcherTimer _flashTimer;
         private readonly DispatcherTimer _blinkTimer;
 
+        // Сохраняем делегаты в поля — так сможем отписаться в Dispose
+        private readonly EventHandler _hStateChanged;
+        private readonly EventHandler _hScoreChanged;
+        private readonly EventHandler<Track> _hTrackChanged;
+        private readonly EventHandler<Team> _hFirstPressed;
+        private readonly EventHandler<Category> _hCategoryHighlighted;
+        private readonly EventHandler _hRemainingChanged;
+        private readonly EventHandler _hSettingsChanged;
+        private readonly EventHandler<Team> _hHeartbeat;
+        private readonly EventHandler _hHeartbeatChanged;
+        private readonly EventHandler _hTeamsChanged;
+
         private bool _blinkPhase;
         private CategoryTile _blinkingTile;
 
@@ -141,15 +153,27 @@ namespace GuessMelody.ViewModels
             _engine = engine;
             _audio = audio;
 
-            _engine.StateChanged += (s, e) => OnEngineStateChanged();
-            _engine.ScoreChanged += (s, e) => OnEngineScoreChanged();
-            _engine.TrackChanged += (s, e) => OnEngineTrackChanged(e);
-            _engine.FirstPressed += (s, team) => OnFirstPressed(team);
-            _engine.CategoryHighlighted += (s, cat) => OnCategoryHighlighted(cat);
-            _engine.RemainingChanged += (s, e) => OnRemainingChanged();
-            _engine.SettingsChanged += (s, e) => OnSettingsChanged();
-            _engine.Heartbeat += (s, team) => OnTeamHeartbeat(team);
-            _engine.HeartbeatChanged += (s, e) => OnHeartbeatChanged();
+            _hStateChanged = (s, e) => OnEngineStateChanged();
+            _hScoreChanged = (s, e) => OnEngineScoreChanged();
+            _hTrackChanged = (s, t) => OnEngineTrackChanged(t);
+            _hFirstPressed = (s, team) => OnFirstPressed(team);
+            _hCategoryHighlighted = (s, cat) => OnCategoryHighlighted(cat);
+            _hRemainingChanged = (s, e) => OnRemainingChanged();
+            _hSettingsChanged = (s, e) => OnSettingsChanged();
+            _hHeartbeat = (s, team) => OnTeamHeartbeat(team);
+            _hHeartbeatChanged = (s, e) => OnHeartbeatChanged();
+            _hTeamsChanged = (s, e) => RebuildFromSettings();
+
+            _engine.StateChanged += _hStateChanged;
+            _engine.ScoreChanged += _hScoreChanged;
+            _engine.TrackChanged += _hTrackChanged;
+            _engine.FirstPressed += _hFirstPressed;
+            _engine.CategoryHighlighted += _hCategoryHighlighted;
+            _engine.RemainingChanged += _hRemainingChanged;
+            _engine.SettingsChanged += _hSettingsChanged;
+            _engine.Heartbeat += _hHeartbeat;
+            _engine.HeartbeatChanged += _hHeartbeatChanged;
+            _engine.TeamsChanged += _hTeamsChanged;
 
             FlashCommand = new RelayCommand(p => Adjust(p as string, 1));
             UnflashCommand = new RelayCommand(p => Adjust(p as string, -1));
@@ -395,6 +419,21 @@ namespace GuessMelody.ViewModels
 
         public void Dispose()
         {
+            try
+            {
+                _engine.StateChanged -= _hStateChanged;
+                _engine.ScoreChanged -= _hScoreChanged;
+                _engine.TrackChanged -= _hTrackChanged;
+                _engine.FirstPressed -= _hFirstPressed;
+                _engine.CategoryHighlighted -= _hCategoryHighlighted;
+                _engine.RemainingChanged -= _hRemainingChanged;
+                _engine.SettingsChanged -= _hSettingsChanged;
+                _engine.Heartbeat -= _hHeartbeat;
+                _engine.HeartbeatChanged -= _hHeartbeatChanged;
+                _engine.TeamsChanged -= _hTeamsChanged;
+            }
+            catch { }
+
             _flashTimer?.Stop();
             _blinkTimer?.Stop();
         }

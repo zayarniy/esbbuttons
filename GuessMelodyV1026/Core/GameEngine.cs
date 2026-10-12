@@ -77,6 +77,9 @@ namespace GuessMelody.Core
         public event EventHandler RequestResumeTrack;
         public event EventHandler<string> MacSeen;
 
+        /// <summary>Ведущий принудительно показывает правильный ответ (без звука «Правильный», без очков).</summary>
+        public event EventHandler<string> RevealAnswerRequested;
+
         /// <summary>Пришёл HB или нажатие от MAC, которого нет ни в одной команде.
         /// Используется, чтобы UI мог предложить «привязать к команде X».</summary>
         public event EventHandler<string> UnknownMacSeen;
@@ -554,6 +557,41 @@ namespace GuessMelody.Core
             _log.Add(LogKind.Game, "⌛ Время на ответ истекло.");
             State = RoundState.Scored;
             RaiseState();
+        }
+
+        /// <summary>
+        /// Ведущий жмёт «Показать правильный ответ» — никто не угадал.
+        /// Очки не начисляются, звук «Правильный» не играет,
+        /// но окно с ответом показывается и музыка снимается с паузы.
+        /// </summary>
+        public void RevealAnswer()
+        {
+            if (CurrentTrack == null)
+            {
+                _log.Add(LogKind.Game, "Некуда показывать ответ — трек не выбран.");
+                return;
+            }
+
+            // Снять музыку с паузы — пусть доиграет фрагмент
+            int afterSec = Settings?.Timings?.AfterCorrectPlaySec ?? 5;
+            if (afterSec > 0)
+            {
+                RequestResumeTrack?.Invoke(this, EventArgs.Empty);
+                _afterCorrectTimer.Stop();
+                _afterCorrectTimer.Start(afterSec);
+                _log.Add(LogKind.Audio,
+                    $"▶ Reveal: музыка продолжит играть ещё {afterSec} с");
+            }
+
+            // Состояние — «показали ответ». Не Scored, потому что очко никому не начислено.
+            _answerTimer.Stop();
+            State = RoundState.Wrong;   // или отдельное состояние? См. примечание ниже.
+            RaiseState();
+
+            _log.Add(LogKind.Game, $"👁 Показан правильный ответ: {CurrentTrack.RelativePath}");
+
+            // Событие для окна ответа (без звука «Правильный»)
+            RevealAnswerRequested?.Invoke(this, CurrentTrack.RelativePath);
         }
 
         // -------------------------------------------------------------

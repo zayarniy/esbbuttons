@@ -34,7 +34,12 @@
                             Background="#C8E6C9" Margin="0,0,4,0"/>
                     <Button Content="❌ Нет" Command="{Binding NoCommand}"  Padding="14,6"
                             Background="#FFCDD2" Margin="0,0,16,0"/>
-
+                    <Button Content="👁 Показать ответ"
+        Command="{Binding RevealAnswerCommand}"
+        Padding="12,6"
+        Background="#FFE0B2"
+        Margin="0,0,16,0"
+        ToolTip="Показать правильный ответ без звука и без начисления очков. Музыка продолжит играть ещё N секунд (из настроек)."/>
                     <Button Content="🚨 PANIC" Command="{Binding PanicCommand}" Padding="12,6"
                             Background="#FFAB91"/>
                 </StackPanel>

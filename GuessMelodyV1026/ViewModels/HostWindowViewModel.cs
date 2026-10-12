@@ -1,10 +1,11 @@
-﻿using System;
+﻿using GuessMelody.Core;
+using GuessMelody.Core.Enums;
+using GuessMelody.Core.Models;
+using GuessMelody.Services;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
-using GuessMelody.Core;
-using GuessMelody.Core.Enums;
-using GuessMelody.Services;
 
 namespace GuessMelody.ViewModels
 {
@@ -15,6 +16,19 @@ namespace GuessMelody.ViewModels
         private readonly FeedbackService _feedback;
         public ObservableCollection<TeamTile> Teams { get; } = new ObservableCollection<TeamTile>();
         public ObservableCollection<CategoryTile> Categories { get; } = new ObservableCollection<CategoryTile>();
+        private readonly EventHandler _hStateChanged;
+        private readonly EventHandler _hScoreChanged;
+        private readonly EventHandler<Track> _hTrackChanged;
+        private readonly EventHandler _hRemainingChanged;
+        private readonly EventHandler<Category> _hCategoryHighlighted;
+        private readonly EventHandler<Team> _hHeartbeat;
+        private readonly EventHandler _hHeartbeatChanged;
+        private readonly EventHandler _hTeamsChanged;
+        private readonly EventHandler<string> _hCorrectRequested;
+        private readonly EventHandler<string> _hWrongRequested;
+        private readonly EventHandler _hWrongPauseFinished;
+        private readonly EventHandler<string> _hRevealRequested;
+
 
         public HostWindowViewModel(GameEngine engine, AudioCoordinator audio, FeedbackService feedback)
         {
@@ -22,48 +36,34 @@ namespace GuessMelody.ViewModels
             _audio = audio;
             _feedback = feedback;
 
-            _engine.StateChanged += (s, e) => RefreshAll();
-            _engine.ScoreChanged += (s, e) => RefreshTeams();
-            _engine.TrackChanged += (s, e) => RefreshAll();
-            _engine.RemainingChanged += (s, e) => RebuildCategories();
-            _engine.CategoryHighlighted += (s, cat) => MarkActiveCategory(cat);
-            _engine.TeamsChanged += (s, e) => RefreshTeams();
+            // ---- Делегаты-обработчики (сохраняем в поля для Dispose) ----
+            _hStateChanged = (s, e) => RefreshAll();
+            _hScoreChanged = (s, e) => RefreshTeams();
+            _hTrackChanged = (s, t) => RefreshAll();
+            _hRemainingChanged = (s, e) => RebuildCategories();
+            _hCategoryHighlighted = (s, cat) => MarkActiveCategory(cat);
+            _hTeamsChanged = (s, e) => RefreshTeams();
 
-            StartRoundCommand = new RelayCommand(_ => StartNextRound());
-            NextRoundCommand = new RelayCommand(_ => { _engine.NextRound(); RebuildCategories(); });
-            EndRoundCommand = new RelayCommand(_ => _engine.EndRound());
-            PauseCommand = new RelayCommand(_ => _engine.PauseMusic());
-            ResumeCommand = new RelayCommand(_ => _engine.ResumeMusic());
-
-            // Звуки «Правильный»/«Неправильный» теперь играет FeedbackService —
-            // в командах их НЕ дублируем.
-            YesCommand = new RelayCommand(_ => _engine.SubmitScore(true));
-            NoCommand = new RelayCommand(_ => _engine.SubmitScore(false));
-
-            PanicCommand = new RelayCommand(_ => _engine.Panic());
-
-            // Heartbeat-индикатор
-            _engine.Heartbeat += (s, team) =>
+            _hHeartbeat = (s, team) =>
             {
                 if (team == null) return;
                 var tile = Teams.FirstOrDefault(x =>
                     string.Equals(x.Team.Mac, team.Mac, StringComparison.OrdinalIgnoreCase));
-
                 if (tile == null) { RefreshTeams(); return; }
                 tile.PulseHeartbeat();
             };
-            _engine.HeartbeatChanged += (s, e) =>
+
+            _hHeartbeatChanged = (s, e) =>
             {
                 foreach (var t in Teams) t.Refresh();
             };
 
-            // Движок просит — сервис показывает окно и играет звук
-            _engine.CorrectAnswerRequested += (s, path) => _feedback.ShowCorrect(path);
-            _engine.WrongAnswerRequested += (s, name) =>
+            _hCorrectRequested = (s, path) => _feedback.ShowCorrect(path);
+            _hWrongRequested = (s, name) =>
                 _feedback.ShowWrong(_engine.Settings?.Timings?.WrongFeedbackPauseSec ?? 3);
+            _hRevealRequested = (s, path) => _feedback.RevealCorrect(path);
 
-            // Пауза после «Нет» закончилась → при разрешённом переповторе продолжаем музыку
-            _feedback.WrongPauseFinished += (s, e) =>
+            _hWrongPauseFinished = (s, e) =>
             {
                 if (_engine.State == RoundState.Wrong &&
                     _engine.Settings?.Rules?.AllowRePressAfterWrong == true)
@@ -71,6 +71,36 @@ namespace GuessMelody.ViewModels
                     _engine.ResumeMusic();
                 }
             };
+
+            // ---- Подписки (ровно один раз) ----
+            _engine.StateChanged += _hStateChanged;
+            _engine.ScoreChanged += _hScoreChanged;
+            _engine.TrackChanged += _hTrackChanged;
+            _engine.RemainingChanged += _hRemainingChanged;
+            _engine.CategoryHighlighted += _hCategoryHighlighted;
+            _engine.Heartbeat += _hHeartbeat;
+            _engine.HeartbeatChanged += _hHeartbeatChanged;
+            _engine.TeamsChanged += _hTeamsChanged;
+            _engine.CorrectAnswerRequested += _hCorrectRequested;
+            _engine.WrongAnswerRequested += _hWrongRequested;
+            _engine.RevealAnswerRequested += _hRevealRequested;
+            _feedback.WrongPauseFinished += _hWrongPauseFinished;
+
+            // ---- Команды ----
+            StartRoundCommand = new RelayCommand(_ => StartNextRound());
+            NextRoundCommand = new RelayCommand(_ => { _engine.NextRound(); RebuildCategories(); });
+            EndRoundCommand = new RelayCommand(_ => _engine.EndRound());
+            PauseCommand = new RelayCommand(_ => _engine.PauseMusic());
+            ResumeCommand = new RelayCommand(_ => _engine.ResumeMusic());
+
+            RevealAnswerCommand = new RelayCommand(
+                _ => _engine.RevealAnswer(),
+                _ => _engine.CurrentTrack != null);
+
+            // Звуки «Правильный»/«Неправильный» играет FeedbackService — в командах не дублируем
+            YesCommand = new RelayCommand(_ => _engine.SubmitScore(true));
+            NoCommand = new RelayCommand(_ => _engine.SubmitScore(false));
+            PanicCommand = new RelayCommand(_ => _engine.Panic());
 
             RebuildCategories();
             RefreshAll();
@@ -84,6 +114,8 @@ namespace GuessMelody.ViewModels
         public ICommand YesCommand { get; }
         public ICommand NoCommand { get; }
         public ICommand PanicCommand { get; }
+
+        public ICommand RevealAnswerCommand { get; }
 
         public string RoundText =>
             _engine.TotalRounds > 0
@@ -180,6 +212,24 @@ namespace GuessMelody.ViewModels
             }
         }
 
-        public void Dispose() { }
+        public void Dispose() {
+
+            try
+            {
+                _engine.StateChanged -= _hStateChanged;
+                _engine.ScoreChanged -= _hScoreChanged;
+                _engine.TrackChanged -= _hTrackChanged;
+                _engine.RemainingChanged -= _hRemainingChanged;
+                _engine.CategoryHighlighted -= _hCategoryHighlighted;
+                _engine.Heartbeat -= _hHeartbeat;
+                _engine.HeartbeatChanged -= _hHeartbeatChanged;
+                _engine.TeamsChanged -= _hTeamsChanged;
+                _engine.CorrectAnswerRequested -= _hCorrectRequested;
+                _engine.WrongAnswerRequested -= _hWrongRequested;
+                _feedback.WrongPauseFinished -= _hWrongPauseFinished;
+                _engine.RevealAnswerRequested -= _hRevealRequested;
+            }
+            catch { }
+        }
     }
 }

@@ -1,6 +1,7 @@
-﻿using System.Windows;
+﻿using GuessMelody.ViewModels;
+using System;
+using System.Windows;
 using System.Windows.Input;
-using GuessMelody.ViewModels;
 
 namespace GuessMelody.Views
 {
@@ -14,8 +15,12 @@ namespace GuessMelody.Views
             InitializeComponent();
 
             Current = this;
-            Closed += (s, e) => { if (Current == this) Current = null; };
-
+            //Closed += (s, e) => { if (Current == this) Current = null; };
+            Closed += (s, e) =>
+            {
+                if (ReferenceEquals(Current, this)) Current = null;
+                (DataContext as IDisposable)?.Dispose();
+            };
             PreviewKeyDown += OnPreviewKeyDown;
         }
 

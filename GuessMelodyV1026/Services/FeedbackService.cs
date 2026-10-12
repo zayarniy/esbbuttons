@@ -80,9 +80,24 @@ namespace GuessMelody.Services
             catch { return path; }
         }
 
+        /// <summary>
+        /// Показать правильный ответ без звука «Правильный».
+        /// Используется, когда никто не угадал и ведущий раскрывает ответ.
+        /// </summary>
+        public void RevealCorrect(string trackRelativePath)
+        {
+            var name = FileNameWithoutExtension(trackRelativePath);
+            if (string.IsNullOrEmpty(name)) name = "—";
+
+            _log.Add(LogKind.Game, $"👁 Reveal: {name}");
+            // ВАЖНО: не вызываем _audio.PlayCorrect()
+            ShowCorrectAnswer?.Invoke(this, name);
+        }
+
         public void Dispose()
         {
             _pauseTimer?.Stop();
+            
         }
     }
 }
