@@ -67,6 +67,7 @@ namespace GuessMelody
             // Активировать мост heartbeat (создаётся лениво — принудительно резолвим)
             Services.GetRequiredService<GuessMelody.Services.HeartbeatBridge>();
             Services.GetRequiredService<GuessMelody.Services.PressBridge>();
+            Services.GetRequiredService<GuessMelody.Services.AnswerWindowService>();
         }
 
         protected override void OnExit(ExitEventArgs e)
